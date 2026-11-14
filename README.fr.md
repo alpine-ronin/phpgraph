@@ -21,15 +21,22 @@
 Un agent de code dans un projet PHP qu'il ne connaît pas cherche des noms avec grep, lit fichier après fichier, et
 devine quand la réponse passe par quelque chose qu'une recherche de noms ne montre pas : une interface, le conteneur
 de services, un bus de messages, une route. phpgraph analyse le projet une fois et donne la réponse à l'agent à
-partir d'un graphe, par MCP, en un appel.
+partir d'un graphe, par MCP, en un appel. Dans les benchmarks, il a été rentable sur le plus grand projet mesuré,
+pour une question sur l'impact d'un changement ; sur des projets plus petits, la même question a coûté plus de tokens
+avec lui.
 
-<!-- DEMO: same task with and without phpgraph, 60 to 90s -->
+## Démo
+
+![démo](docs/assets/demo.gif)
+
+Une vidéo de 68 secondes, la même question à Claude Code avec et sans phpgraph, une vraie exécution de chaque côté :
+[docs/assets/demo-video.mp4](docs/assets/demo-video.mp4) ([comment elle a été faite](docs/demo/VIDEO_SCRIPT.md), en anglais).
 
 Pas de LLM, pas de réseau, pas d'embeddings : votre code ne quitte jamais votre machine, et phpgraph l'analyse sans
 l'exécuter. Chaque fait dit à quel point il est sûr (`EXTRACTED`, `INFERRED` ou `AMBIGUOUS`), et ce que phpgraph n'a
 pas su relier est signalé.
 
-## Un résultat mesuré
+## Où il aide et où il n'aide pas
 
 Akeneo PIM (8 416 fichiers PHP), tâche : *lister toutes les classes à modifier quand
 `GetCategoryInterface::byCode()` prend un second paramètre*. Claude Code 2.1.323 avec Sonnet, branche de
@@ -42,9 +49,9 @@ développement de phpgraph 2.1.0, 3 exécutions avec phpgraph et 3 sans :
 | Tokens par exécution, plage | 86 107 à 130 744 | 172 998 à 175 220 |
 | Durée par exécution | 12,8 à 17,5 s | 11,6 à 12,7 s |
 
-La même réponse avec 51 % de tokens en moins (médiane), pas plus vite. C'est la meilleure tâche d'impact de phpgraph,
-sur le plus grand projet ; sur les 5 autres tâches d'impact, sur des projets plus petits, phpgraph a coûté de 1 % à
-56 % de tokens en plus. Tous les résultats, groupés par version, avec la méthode :
+Où il aide : la même réponse avec 51 % de tokens en moins (médiane) sur le plus grand projet. Où il n'aide pas : sur
+les 5 autres tâches d'impact, sur des projets plus petits, phpgraph a utilisé de 1 % à 56 % de tokens en plus, et sur
+cette tâche la durée n'était pas meilleure. Tous les résultats, groupés par version, avec la méthode :
 [docs/BENCHMARKS.md](docs/BENCHMARKS.md) (en anglais).
 
 ## Démarrage rapide

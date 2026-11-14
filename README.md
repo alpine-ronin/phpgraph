@@ -21,13 +21,20 @@
 A coding agent in a PHP project it does not know searches names with grep, reads file after file, and guesses when
 the answer goes through something a name search does not show: an interface, the service container, a message bus,
 a route. phpgraph parses the project once and gives the agent the answer from a graph, over MCP, in one call.
+In the benchmarks it paid off on the largest project measured, for a question about the impact of a change; on
+smaller projects the same kind of question cost more tokens with it.
 
-<!-- DEMO: same task with and without phpgraph, 60 to 90s -->
+## Demo
+
+![demo](docs/assets/demo.gif)
+
+A 68-second video, the same question to Claude Code with and without phpgraph, one real run each:
+[docs/assets/demo-video.mp4](docs/assets/demo-video.mp4) ([how it was made](docs/demo/VIDEO_SCRIPT.md)).
 
 No LLM, no network, no embeddings: your code never leaves your machine, and phpgraph parses it without running it.
 Every fact says how sure it is (`EXTRACTED`, `INFERRED` or `AMBIGUOUS`), and what phpgraph could not link is reported.
 
-## One measured result
+## Where it helps and where it doesn't
 
 Akeneo PIM (8,416 PHP files), task: *list every class that must change when
 `GetCategoryInterface::byCode()` takes a second parameter*. Claude Code 2.1.323 with Sonnet, phpgraph 2.1.0
@@ -40,9 +47,9 @@ development branch, 3 runs with phpgraph and 3 without:
 | Tokens per run, range | 86,107 to 130,744 | 172,998 to 175,220 |
 | Time per run | 12.8 to 17.5 s | 11.6 to 12.7 s |
 
-The same answer for 51 % fewer tokens (median), not faster. This is phpgraph's best impact task, on the largest project; on the
-5 other impact tasks, on smaller projects, phpgraph cost from 1 % to 56 % more tokens. Every result, grouped by
-version, with the method: [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+Where it helps: the same answer for 51 % fewer tokens (median) on the largest project. Where it doesn't: on the 5 other
+impact tasks, on smaller projects, phpgraph used 1 % to 56 % more tokens, and on this task time was not better.
+Every result, grouped by version, with the method: [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
 ## Quick start
 

@@ -1,0 +1,28 @@
+Script started on 2026-11-14 20:37:21+01:00 [<not executed on terminal>]
+[36m● phpgraph impact_of[0m {"name": "Akeneo\\Category\\Domain\\Query\\GetCategoryInterface::byCode", "depth": 1}
+[36m● Bash[0m cd src/Akeneo/Category/back 2>/dev/null || cd ~/project/src/Akeneo/Category/back; sed -n 15,60p Application/Handler/CategoryQue
+[36m● Grep[0m byCode\(
+[36m● Grep[0m byCode\(
+
+These production classes must change, all under `src/Akeneo/Category/back/`. The list comes from the phpgraph dependency graph. I confirmed the `CategoryQueryHandler` call in the source and didn't open the other call sites.
+
+**Interface**
+- `Domain/Query/GetCategoryInterface.php` declares `byCode()` at line 17.
+
+**Implementation**
+- `Infrastructure/Storage/Sql/GetCategorySql.php` overrides `byCode()`.
+
+**Callers of `byCode()` on the interface**
+- `Application/Handler/CategoryQueryHandler.php` calls `$this->getCategory->byCode($categoryCode)` at line 45. Its own public `byCode()` at line 43 may also need the new parameter, so it can pass the value through.
+- `Application/UpsertCategoryCommandHandler.php` calls it in `__invoke`, around line 41.
+- `Infrastructure/Handler/SearchFiltersSql.php` calls it in `build`, around line 38.
+- `Infrastructure/Storage/Save/Query/UpsertCategoryBaseSql.php` calls it in `execute`, around line 34.
+- `Infrastructure/Storage/Save/Query/UpsertCategoryTranslationsSql.php` calls it in `isIdenticalLabel`, around line 76.
+
+That makes 7 production classes.
+
+Tests will also break. These specs cover the callers: `CategorySaverProcessorSpec`, `UpsertCategoryCommandHandlerSpec` and `SearchFiltersSqlSpec`. These integration tests also use it: `CategoryQueryIntegration`, `UpsertCategoryBaseSqlIntegration` and `UpsertCategoryTranslationsSqlIntegration`. You excluded tests, so I haven't listed them as needing changes.
+
+[33mtokens 53,478   tool calls 4   time 16.3 s[0m
+
+Script done on 2026-11-14 20:37:38+01:00 [COMMAND_EXIT_CODE="0"]
