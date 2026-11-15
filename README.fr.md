@@ -10,6 +10,7 @@
 <p align="center">
   <a href="https://github.com/alpine-ronin/phpgraph/actions/workflows/ci.yml"><img src="https://github.com/alpine-ronin/phpgraph/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://packagist.org/packages/alpine-ronin/phpgraph"><img src="https://img.shields.io/packagist/v/alpine-ronin/phpgraph" alt="Version Packagist"></a>
+  <a href="https://packagist.org/packages/alpine-ronin/phpgraph"><img src="https://img.shields.io/packagist/dt/alpine-ronin/phpgraph" alt="Téléchargements"></a>
   <img src="https://img.shields.io/badge/php-%3E%3D8.5-777bb4" alt="PHP 8.5+ pour l'exécuter depuis les sources">
   <a href="https://github.com/alpine-ronin/phpgraph/blob/main/LICENSE"><img src="https://img.shields.io/badge/licence-MIT-blue" alt="Licence : MIT"></a>
 </p>
@@ -30,7 +31,7 @@ avec lui.
 ![démo](docs/assets/demo.gif)
 
 Une vidéo de 68 secondes, la même question à Claude Code avec et sans phpgraph, une vraie exécution de chaque côté :
-[docs/assets/demo-video.mp4](docs/assets/demo-video.mp4) ([comment elle a été faite](docs/demo/VIDEO_SCRIPT.md), en anglais).
+[youtu.be/Cv4ULkN3FF0](https://youtu.be/Cv4ULkN3FF0).
 
 Pas de LLM, pas de réseau, pas d'embeddings : votre code ne quitte jamais votre machine, et phpgraph l'analyse sans
 l'exécuter. Chaque fait dit à quel point il est sûr (`EXTRACTED`, `INFERRED` ou `AMBIGUOUS`), et ce que phpgraph n'a
