@@ -3,6 +3,18 @@
 phpgraph follows [semantic versioning](https://semver.org) from 1.0.0; what stays stable is listed in
 [docs/STABILITY.md](docs/STABILITY.md), and changes only in a major version (2.0.0), announced here.
 
+## 2.3.0 (2026-11-15)
+
+### Added
+- `impact` of a method says what it checked and found not reached by the change, which agents searched for with grep
+  to trust the answer: the other classes using its class without calling it, the other calls of the same name (by
+  class), and the calls of that name on a receiver of unknown type, with their files and lines, since they may reach
+  it. A class overriding the method says whether it is the only implementation. Text answer only. Akeneo,
+  `GetCategoryInterface::byCode()`, 6 runs: median 110k tokens instead of 177k with 2.2.0 and 171k without phpgraph
+  (3 runs each), every run successful.
+- `graph.json`: `meta.summary.unresolvedCalls`, the files and lines of the calls on a receiver of unknown type, by
+  method name (Akeneo: +1.4 MB).
+
 ## 2.2.0 (2026-11-14)
 
 ### Changed

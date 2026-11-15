@@ -7,6 +7,8 @@ namespace PhpGraph\Tests;
 use PhpGraph\Graph\Confidence;
 use PhpGraph\Graph\Relation;
 use PhpGraph\Presentation\TextPresenter;
+use PhpGraph\Project\BuildOptions;
+use PhpGraph\Project\ProjectSummary;
 use PhpGraph\Query\GraphQuery;
 use PhpGraph\Query\Result\ImpactedClass;
 use PhpGraph\Tests\Support\Dig;
@@ -296,6 +298,32 @@ final class ImpactTest extends TestCase
         self::assertArrayHasKey('route:src/OrderController.php#POST /orders', $impact);
         self::assertArrayNotHasKey('App\PlaceOrder', $impact, 'the message does not depend on its handler');
         self::assertArrayNotHasKey('App\OrderFactory', $impact, 'building the message sends nothing');
+    }
+
+    public function testTheReportSaysWhatItCheckedAndFoundNotReached(): void
+    {
+        $result = $this->buildProject([
+            'src/GetCategory.php' => 'namespace App; interface GetCategory { public function byCode(string $c): ?string; public function byId(int $id): ?string; }',
+            'src/GetCategorySql.php' => 'namespace App; final class GetCategorySql implements GetCategory { public function byCode(string $c): ?string { return $c; } public function byId(int $id): ?string { return null; } }',
+            'src/GetAttribute.php' => 'namespace App; final class GetAttribute { public function byCode(string $c): ?string { return $c; } }',
+            'src/Handler.php' => 'namespace App; final class Handler { public function __construct(private GetCategory $get) {} public function run(): ?string { return $this->get->byCode("a"); } }',
+            'src/Template.php' => 'namespace App; final class Template { public function __construct(private GetCategory $get) {} public function run(): ?string { return $this->get->byId(1); } }',
+            'src/Holder.php' => 'namespace App; final class Holder { public function __construct(private GetCategory $get) {} }',
+            'src/Preview.php' => 'namespace App; final class Preview { public function __construct(private GetAttribute $get) {} public function run(): ?string { return $this->get->byCode("b")'
+                . "\n . \$this->get->byCode(\"c\"); } }",
+        ]);
+        $query = new GraphQuery($result->graph, ProjectSummary::fromBuild($result, new BuildOptions(), []));
+
+        $text = (new TextPresenter($query))->impact('App\GetCategory::byCode');
+        self::assertStringContainsString('GetCategorySql (App) [the only implementation]', $text, 'an agent searched for other implementations');
+        self::assertStringContainsString('Using GetCategory without calling byCode(): Holder, Template', $text, 'an agent searched for the other users of the interface to trust the answer');
+        self::assertStringContainsString('Other calls named byCode(): 2, to other classes: GetAttribute 2', $text, 'the same name on another class is not the change');
+        self::assertStringContainsString('Calls named byCode() on a receiver of unknown type: none', $text, 'no call of that name left unresolved');
+
+        $unresolved = $this->buildProject(['src/Script.php' => 'namespace App; function run($anything) { return $anything->byCode("d"); }']);
+        $text = (new TextPresenter(new GraphQuery($unresolved->graph, ProjectSummary::fromBuild($unresolved, new BuildOptions(), []))))->impact('App\GetCategory::byCode');
+        self::assertStringContainsString('Calls named byCode() on a receiver of unknown type, which may reach it: 1, Script.php L2', $text, 'a call no edge follows may go to the change: where it is, to read instead of searching');
+        self::assertStringNotContainsString('unknown type', (new TextPresenter(new GraphQuery($unresolved->graph)))->impact('App\GetCategory::byCode'), 'a graph without the counts says nothing about them');
     }
 
     public function testTheCompactReport(): void

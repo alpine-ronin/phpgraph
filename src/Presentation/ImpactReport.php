@@ -209,6 +209,14 @@ final class ImpactReport
                 $lines[] = '';
                 $lines[] = 'No test touches: ' . self::cut($uncovered, $compact);
             }
+            $checked = $this->checked();
+            if ($checked !== []) {
+                $lines[] = '';
+                $lines[] = 'Checked, not reached by the change:';
+                foreach ($checked as $line) {
+                    $lines[] = '  ' . $line;
+                }
+            }
         }
 
         $state = $section === 'state' ? [...$g['state'], ...$g['quietState']] : $g['state'];
@@ -419,6 +427,10 @@ final class ImpactReport
         if ($class->through !== null) {
             $notes[] = 'through ' . $this->query->label($class->through);
         }
+        $overriding = $this->overriding($class);
+        if ($overriding !== null) {
+            $notes[] = $overriding;
+        }
         // Through the state, nothing is followed further: the section says so.
         if (!$class->followed && !$class->throughState) {
             $notes[] = $class->edge->relation === Relation::Receives ? 'receives it among others, not followed' : 'inherited code, not followed';
@@ -484,6 +496,28 @@ final class ImpactReport
     /**
      * A relation of a class to the change, as the site of its line: `handles it → __invoke()`, `extends it`.
      */
+    /**
+     * For a class overriding the changed method, how many do: `the only implementation` saves an agent searching for
+     * the others (two Akeneo runs out of six did).
+     */
+    private function overriding(ImpactedClass $class): ?string
+    {
+        $overrides = array_filter($class->sites, fn (Edge $edge): bool => $edge->relation === Relation::Overrides && $edge->target === $this->changed->id);
+        if ($overrides === []) {
+            return null;
+        }
+        $count = 0;
+        foreach ($this->query->graph()->incident($this->changed->id) as $item) {
+            if (!$item['forward'] && $item['edge']->relation === Relation::Overrides) {
+                ++$count;
+            }
+        }
+        $owner = $this->query->graph()->node(explode('::', $this->changed->id)[0]);
+        $kind = $owner?->kind === NodeKind::PhpInterface ? 'implementation' : 'override';
+
+        return $count === 1 ? 'the only ' . $kind : \sprintf('one of %d %ss', $count, $kind);
+    }
+
     private static function relationWords(Relation $relation): string
     {
         return match ($relation) {
@@ -602,6 +636,141 @@ final class ImpactReport
         }
 
         return $uncovered;
+    }
+
+    /**
+     * What an agent would search for to trust the answer, when a method changes: the other classes using its class
+     * (they call its other methods, or only hold it), the calls of the same name going to other classes, and the
+     * calls of that name on a receiver of unknown type, which no edge follows. An agent that was not told grepped
+     * for all three (Akeneo `GetCategoryInterface::byCode()`: two runs out of three, twice the tokens).
+     *
+     * @return list<string>
+     */
+    private function checked(): array
+    {
+        if ($this->changed->kind !== NodeKind::Method || !str_contains($this->changed->id, '::')) {
+            return [];
+        }
+        [$class, $method] = explode('::', $this->changed->id, 2);
+        $reached = [$class => true];
+        foreach ($this->impact->classes as $impacted) {
+            $reached[explode('::', $impacted->class)[0]] = true;
+        }
+
+        $checked = [];
+        $users = $this->otherUsers($class, $reached);
+        if ($users !== []) {
+            $checked[] = \sprintf('Using %s without calling %s(): %s', $this->query->label($class), $method, self::cut($users, true));
+        }
+        $sameName = $this->sameNameCalls($method, $reached);
+        if ($sameName !== []) {
+            $owners = [];
+            foreach (\array_slice($sameName, 0, 5, true) as $owner => $count) {
+                $owners[] = \sprintf('%s %d', $this->query->label($owner), $count);
+            }
+            $more = \count($sameName) > \count($owners) ? \sprintf(' and %d more classes', \count($sameName) - \count($owners)) : '';
+            $checked[] = \sprintf('Other calls named %s(): %d, to other classes: %s%s', $method, array_sum($sameName), implode(', ', $owners), $more);
+        }
+        $unresolved = $this->query->unresolvedCalls($method);
+        if ($unresolved === []) {
+            $checked[] = \sprintf('Calls named %s() on a receiver of unknown type: none', $method);
+        } elseif ($unresolved !== null) {
+            $checked[] = \sprintf(
+                'Calls named %s() on a receiver of unknown type, which may reach it: %d, %s',
+                $method,
+                array_sum(array_map('count', $unresolved)),
+                $this->sites($unresolved),
+            );
+        }
+
+        return $checked;
+    }
+
+    /**
+     * Call sites by file, whole paths an agent can open (below the common directory, those first):
+     * `tests/Integration/Helper/CategoryTestCase.php L72,87; …`.
+     *
+     * @param array<string, list<int>> $sites file => lines
+     */
+    private function sites(array $sites): string
+    {
+        uksort($sites, fn (string $a, string $b): int => [!str_starts_with($a, $this->prefix), $a] <=> [!str_starts_with($b, $this->prefix), $b]);
+        $listed = \array_slice($sites, 0, self::FIRST, true);
+        $written = [];
+        foreach ($listed as $file => $lines) {
+            $known = array_filter($lines, static fn (int $line): bool => $line > 0);
+            $path = $this->prefix !== '' && str_starts_with($file, $this->prefix) ? substr($file, \strlen($this->prefix)) : $file;
+            $written[] = $path . ($known === [] ? '' : ' L' . implode(',', $known));
+        }
+        $more = \count($sites) - \count($listed);
+
+        return implode('; ', $written) . ($more > 0 ? \sprintf('; and %d more files', $more) : '');
+    }
+
+    /**
+     * Classes referring to the class or calling its other methods, that the change does not reach.
+     *
+     * @param array<string, true> $reached
+     *
+     * @return list<string>
+     */
+    private function otherUsers(string $class, array $reached): array
+    {
+        $graph = $this->query->graph();
+        $members = [$class];
+        foreach ($graph->incident($class) as $item) {
+            if ($item['forward'] && $item['edge']->relation === Relation::HasMethod) {
+                $members[] = $item['other'];
+            }
+        }
+        $users = [];
+        foreach ($members as $member) {
+            foreach ($graph->incident($member) as $item) {
+                $relation = $item['edge']->relation;
+                if ($item['forward'] || ($relation !== Relation::References && $relation !== Relation::Calls)) {
+                    continue;
+                }
+                $owner = explode('::', $item['other'])[0];
+                if (!isset($reached[$owner]) && $graph->node($owner)?->kind !== NodeKind::File) {
+                    $users[$owner] = true;
+                }
+            }
+        }
+        $names = array_map(fn (string $owner): string => $this->query->label($owner), array_keys($users));
+        sort($names);
+
+        return $names;
+    }
+
+    /**
+     * Call sites of methods of the same name in classes the change does not reach, by class, most called first.
+     *
+     * @param array<string, true> $reached
+     *
+     * @return array<string, int>
+     */
+    private function sameNameCalls(string $method, array $reached): array
+    {
+        $graph = $this->query->graph();
+        $suffix = '::' . strtolower($method);
+        $calls = [];
+        foreach ($graph->nodes() as $node) {
+            if ($node->kind !== NodeKind::Method || !str_ends_with(strtolower($node->id), $suffix)) {
+                continue;
+            }
+            $owner = explode('::', $node->id)[0];
+            if (isset($reached[$owner])) {
+                continue;
+            }
+            foreach ($graph->incident($node->id) as $item) {
+                if (!$item['forward'] && $item['edge']->relation === Relation::Calls) {
+                    $calls[$owner] = ($calls[$owner] ?? 0) + max(1, \count($item['edge']->lines()));
+                }
+            }
+        }
+        arsort($calls);
+
+        return $calls;
     }
 
     /**

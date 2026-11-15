@@ -19,6 +19,7 @@ final readonly class BuildResult
      * @param array<string, int>          $mostUnresolvedMethods method names most often called on an unknown receiver in application code
      * @param list<string>                $services        services of a multi-service repository, empty otherwise
      * @param int                         $phpFilesNotRead PHP files of the directory, when the build read none of them
+     * @param array<string, array<string, string>> $unresolvedCalls lowercase method name => file => lines of its calls on an unknown receiver, tests included
      */
     public function __construct(
         public Graph $graph,
@@ -39,6 +40,7 @@ final readonly class BuildResult
         public InjectionStats $injections = new InjectionStats(),
         public ApiSchemaStats $apiSchemas = new ApiSchemaStats(),
         public ActionStats $actions = new ActionStats(),
+        public array $unresolvedCalls = [],
     ) {
     }
 

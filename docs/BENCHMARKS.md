@@ -14,6 +14,8 @@ Results are grouped by phpgraph version and agent: numbers from different versio
 | [Impact rerun](#impact-without-the-extra-cost-21) | 2.1.0 development branch (PR #18) | Claude Code 2.1.323, Sonnet | 5 public, 6 tasks | 3, from several batches |
 | [Reasons in `outline`](#reasons-in-outline-namespaces-in-impact-rerun) | 2.1.0 development branch (PR #18) | Claude Code, Sonnet | 5 public, 12 tasks, phpgraph arm only | 3 |
 | [Hard tasks (pilot)](#hard-tasks-pilot) | commit `363df2f`, then `e103e69` | Claude Code 2.1.323 / 2.1.325, Sonnet and Haiku | 3 public, 4 tasks | **single run** (one task: 3) |
+| [Impact on 2.2.0](#impact-on-220) | 2.2.0 | Claude Code 2.1.325, Sonnet | 5 public, 6 tasks | 3 |
+| [What `impact` checked (2.3)](#what-impact-checked-23) | 2.3.0 development branch, then 2.3.0 | Claude Code 2.1.325, Sonnet | Akeneo, 1 task, phpgraph arm only | 6 |
 | [Private project](#phpgraph-102-sherpa-private-project) | 1.0.2 | Sherpa | 1 private | 3, not reproducible |
 | [Other code graphs](#other-code-graphs-no-agent) | 1.0.2 and 1.5.2 | none | Sylius, Kimai | build: 6 runs (Kimai); counts: one build |
 | [Corpus](#corpus-no-agent) | 1.5.8 | none | 7 public | one build per project |
@@ -267,6 +269,66 @@ trap that the baseline avoided by reading the config. Fixed at commit `e103e69`:
 configuration gives another implementation, and reads the decorators of a service (the composite the container
 injects in its place). The haiku phpgraph arm again, 3 runs (Claude Code 2.1.325, batch `20261113-205206`, $0.06):
 precision 1.00 on every run, tokens unchanged within variance (366,237 to 505,932).
+
+## phpgraph 2.2.0 and 2.3.0, Claude Code
+
+### Impact on 2.2.0
+
+15 November 2026: the 6 impact tasks again on the released 2.2.0 (container-aware `impact`), both arms, 3 runs each,
+Claude Code 2.1.325, Sonnet, in one batch (`20261115-121654`, resumed once after a usage limit; $5.10).
+
+| Task | Success with / without | Tokens, median with / without | | 13 Nov |
+|---|---|---|---|---|
+| akeneo-impact-category-by-code | 3/3 / 3/3 | 177,485 / 170,660 | +4 % | −51 % |
+| bookstack-impact-activity-add | 3/3 / 3/3 | 214,387 / 179,014 | +20 % | +9 % |
+| ddd-impact-event-constructor | 3/3 / 3/3 | 86,658 / 123,944 | −30 % | +4 % |
+| prestashop-impact-manufacturer-exists | 3/3 / 3/3 | 155,948 / 149,876 | +4 % | +56 % |
+| prestashop-impact-redirect-option | 2/3 / 3/3 | 210,286 / 154,134 | +36 % | +39 % |
+| sylius-impact-promotions-integrity | 3/3 / 0/3 | 139,947 / 137,168 | +2 % | +1 % |
+| Total (18 runs per arm) | 17/18 / 15/18 | 2,917,990 / 2,657,541 | +9.8 % | −1.9 % |
+
+- More right answers with phpgraph, more tokens in total. Every failure is a namespace guessed from the path
+  (`Sylius\Bundle\CoreBundle\Tests\…` for `Tests\Sylius\Bundle\CoreBundle\…`), as on 10 November.
+- Akeneo's −51 % of 13 November did not come back. The transcripts tell why: `impact_of` answered right in every run,
+  and then the agent checked the answer with grep in 2 runs out of 3 (1 out of 3 on 13 November), about 45,000 tokens
+  per extra turn. It searched for the other classes using `GetCategoryInterface` (23 files mention it, the answer
+  named 6) and for the other `->byCode(` calls: what the answer did not say it had looked at.
+
+### What `impact` checked (2.3)
+
+`impact` of a method now ends its direct dependents with what it checked and found not reached: the other classes
+using the class without calling the method, the other calls of the same name (by class), and the calls of that name
+on a receiver of unknown type, with their files and lines. On Akeneo the last line names 26 calls: most are real
+calls to the changed method that the graph does not link (integration tests calling
+`$this->get(GetCategoryInterface::class)->byCode()` through a test helper, phpspec mocks), now listed instead of
+missed.
+
+Akeneo task again, phpgraph arm only, 6 runs (batch `20261115-133208`, $0.47), on the branch before its last change
+(`[the only implementation]` on a class overriding the method, not measured):
+
+| | 2.2.0 (3 runs) | 2.3.0 branch (6 runs) | Without phpgraph (3 runs, 2.2.0 batch) |
+|---|---:|---:|---:|
+| Success | 3/3 | 6/6 | 3/3 |
+| Tokens, median | 177,485 | 132,955 | 170,660 |
+| Tokens, range | 86,791 to 222,464 | 87,871 to 133,666 | 127,193 to 176,783 |
+| Runs checking the answer | 2, with 2 or 3 searches | 4, with 1 search | – |
+
+The searches left: other implementations of the interface (2 runs: what the `[the only implementation]` note now
+says), `->byCode(` outside the tests (1), reading `CategoryQueryHandler` (1).
+
+The same 6 runs on the released code, with the `[the only implementation]` note (batch `20261115-140952`, $0.47):
+
+| | 2.3.0 (6 runs) | Without phpgraph (3 runs, 2.2.0 batch) |
+|---|---:|---:|
+| Success | 6/6 | 3/3 |
+| Tokens, median | 110,254 (−35 %) | 170,660 |
+| Tokens, range | 87,643 to 181,273 | 127,193 to 176,783 |
+| Time | 15.9 to 27.9 s | 15.9 to 26.8 s |
+| Runs checking the answer | 3: 1 search (2 runs), 3 searches (1 run) | – |
+
+No run searched for other implementations any more. The searches left are for `->byCode(` outside the tests (3 runs)
+and the classes mentioning `GetCategoryInterface` (1): the unresolved calls the answer lists are mostly in the tests,
+and the agents look again at the application code.
 
 ## phpgraph 1.0.2, Sherpa, private project
 

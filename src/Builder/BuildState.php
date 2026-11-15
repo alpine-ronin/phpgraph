@@ -23,7 +23,7 @@ final class BuildState
      * @param string                                                                               $environment composer files and installed dependencies
      * @param string                                                                               $names       ids every name resolved to
      * @param list<Edge>                                                                           $overrides
-     * @param array<string, list<array{?Edge, string, string}>>                                     $calls       file => [edge added, outcome, method] per call site
+     * @param array<string, list<array{0: ?Edge, 1: string, 2: string, 3?: int}>>                    $calls       file => [edge added, outcome, method, line of an unresolved call] per call site
      * @param array<string, array{int, int, array{definitions: array<string, string>, parameters: array<string, string>, tags: list<array{id: ?string, instanceof: ?string, name: string, attributes: array<string, string>}>, arguments: list<array{id: string, tag: ?string, service: ?string, locator?: bool, setter?: bool}>, decorations: array<string, array{string, int}>}}> $configuration parsed configuration files: [mtime, size, what each declares]
      */
     public function __construct(

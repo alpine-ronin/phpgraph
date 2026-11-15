@@ -24,6 +24,9 @@ final readonly class ProjectSummary
      * @param list<string>       $services              services of a multi-service repository, empty otherwise
      * @param int                $phpFilesNotRead       PHP files of the directory, when the build read none of them
      * @param array<string, int> $otherLanguages        source files in other languages, by language: not in the graph
+     * @param ?array<string, array<string, string>> $unresolvedCalls lowercase method name => file => lines (`12,40`) of
+     *                                                  its calls on an unknown receiver, tests included; null in a graph
+     *                                                  built by an earlier version
      */
     public function __construct(
         public string $generatedAt,
@@ -46,6 +49,7 @@ final readonly class ProjectSummary
         public array $otherLanguages = [],
         public ApiSchemaStats $apiSchemas = new ApiSchemaStats(),
         public ActionStats $actions = new ActionStats(),
+        public ?array $unresolvedCalls = null,
     ) {
     }
 
@@ -76,6 +80,7 @@ final readonly class ProjectSummary
             $otherLanguages,
             $result->apiSchemas,
             $result->actions,
+            $result->unresolvedCalls,
         );
     }
 
@@ -99,6 +104,15 @@ final readonly class ProjectSummary
         $unresolved = array_filter($list('mostUnresolvedMethods'), 'is_int');
         /** @var array<string, int> $otherLanguages */
         $otherLanguages = array_filter($list('otherLanguages'), 'is_int');
+        $unresolvedCalls = null;
+        if (\is_array($data['unresolvedCalls'] ?? null)) {
+            $unresolvedCalls = [];
+            foreach ($data['unresolvedCalls'] as $name => $files) {
+                if (\is_string($name) && \is_array($files)) {
+                    $unresolvedCalls[$name] = array_filter($files, static fn (mixed $lines, int|string $file): bool => \is_string($file) && \is_string($lines), \ARRAY_FILTER_USE_BOTH);
+                }
+            }
+        }
 
         return new self(
             \is_string($data['generatedAt'] ?? null) ? $data['generatedAt'] : '',
@@ -121,6 +135,7 @@ final readonly class ProjectSummary
             $otherLanguages,
             ApiSchemaStats::fromArray($list('apiSchemas')),
             ActionStats::fromArray($list('actions')),
+            $unresolvedCalls,
         );
     }
 
@@ -157,11 +172,12 @@ final readonly class ProjectSummary
      *         forwardsLinked: int, templates: int, unresolvedTargetCount: int, unresolvedTargets: list<string>,
      *         citations: int, citingFiles: int, unreadable: list<string>,
      *     },
+     *     unresolvedCalls?: array<string, array<string, string>>,
      * }
      */
     public function toArray(): array
     {
-        return [
+        $data = [
             'generatedAt' => $this->generatedAt,
             'filesParsed' => $this->filesParsed,
             'filesFailed' => $this->filesFailed,
@@ -183,5 +199,10 @@ final readonly class ProjectSummary
             'apiSchemas' => $this->apiSchemas->toArray(),
             'actions' => $this->actions->toArray(),
         ];
+        if ($this->unresolvedCalls !== null) {
+            $data['unresolvedCalls'] = $this->unresolvedCalls;
+        }
+
+        return $data;
     }
 }

@@ -461,12 +461,13 @@ final class GraphBuilder
                 ? $previous->calls[$path] ?? []
                 : $this->resolveCalls($graph, $types, $methodsByName, $fileCalls, $invokedParameters, $ownNamespaces);
             $inTests = TestFiles::isTest((string) $path);
-            foreach ($calls[$path] as [$edge, $outcome, $method]) {
+            foreach ($calls[$path] as $result) {
+                [$edge, $outcome, $method] = $result;
                 if ($edge !== null) {
                     $graph->addEdge($edge);
                 }
                 if ($outcome !== '') {
-                    $counter->add($outcome, $inTests, $method);
+                    $counter->add($outcome, $inTests, $method, (string) $path, $result[3] ?? null);
                 }
             }
         }
@@ -536,6 +537,7 @@ final class GraphBuilder
             $injections,
             $apiSchemas,
             $actionStats,
+            $counter->unresolvedCalls(),
         );
     }
 
@@ -726,7 +728,7 @@ final class GraphBuilder
      * @param array<string, list<array{int, string}>> $invokedParameters method id => the parameters it calls
      * @param array<string, true>|null    $ownNamespaces see resolveCall()
      *
-     * @return list<array{?Edge, string, string}> an empty outcome for an edge counting no call site
+     * @return list<array{0: ?Edge, 1: string, 2: string, 3?: int}> an empty outcome for an edge counting no call site; the line of an unresolved call
      */
     private function resolveCalls(Graph $graph, TypeResolver $types, array $methodsByName, array $calls, array $invokedParameters = [], ?array $ownNamespaces = null): array
     {
@@ -760,7 +762,7 @@ final class GraphBuilder
 
     /**
      * @param array<string, list<string>>        $methodsByName
-     * @param list<array{?Edge, string, string}> $results
+     * @param list<array{0: ?Edge, 1: string, 2: string, 3?: int}> $results
      * @param array<string, true>|null $ownNamespaces the namespaces of the project's classes ('' the global one), when
      *                                                every dependency is read: a receiver of classes known nowhere in them
      *                                                (`@param unknown $bean`, a placeholder) is no class outside the
@@ -814,7 +816,11 @@ final class GraphBuilder
 
             return;
         }
-        $results[] = [null, $leftProject ? 'chainOutsideProject' : 'unknownReceiver', $call->method];
+        $unresolved = [null, $leftProject ? 'chainOutsideProject' : 'unknownReceiver', $call->method];
+        if ($call->line !== null) {
+            $unresolved[3] = $call->line;
+        }
+        $results[] = $unresolved;
     }
 
     private static function namespaceOf(string $class): string
