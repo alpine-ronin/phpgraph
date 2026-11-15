@@ -10,6 +10,7 @@
 <p align="center">
   <a href="https://github.com/alpine-ronin/phpgraph/actions/workflows/ci.yml"><img src="https://github.com/alpine-ronin/phpgraph/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://packagist.org/packages/alpine-ronin/phpgraph"><img src="https://img.shields.io/packagist/v/alpine-ronin/phpgraph" alt="Packagist version"></a>
+  <a href="https://packagist.org/packages/alpine-ronin/phpgraph"><img src="https://img.shields.io/packagist/dt/alpine-ronin/phpgraph" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/php-%3E%3D8.5-777bb4" alt="PHP 8.5+ to run from source">
   <a href="https://github.com/alpine-ronin/phpgraph/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
 </p>
@@ -29,7 +30,7 @@ smaller projects the same kind of question cost more tokens with it.
 ![demo](docs/assets/demo.gif)
 
 A 68-second video, the same question to Claude Code with and without phpgraph, one real run each:
-[docs/assets/demo-video.mp4](docs/assets/demo-video.mp4) ([how it was made](docs/demo/VIDEO_SCRIPT.md)).
+[youtu.be/Cv4ULkN3FF0](https://youtu.be/Cv4ULkN3FF0).
 
 No LLM, no network, no embeddings: your code never leaves your machine, and phpgraph parses it without running it.
 Every fact says how sure it is (`EXTRACTED`, `INFERRED` or `AMBIGUOUS`), and what phpgraph could not link is reported.
