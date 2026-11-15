@@ -38,18 +38,21 @@ Every fact says how sure it is (`EXTRACTED`, `INFERRED` or `AMBIGUOUS`), and wha
 ## Where it helps and where it doesn't
 
 Akeneo PIM (8,416 PHP files), task: *list every class that must change when
-`GetCategoryInterface::byCode()` takes a second parameter*. Claude Code 2.1.323 with Sonnet, phpgraph 2.1.0
-development branch, 3 runs with phpgraph and 3 without:
+`GetCategoryInterface::byCode()` takes a second parameter*. Claude Code 2.1.325 with Sonnet, 15 November 2026:
+phpgraph 2.3.0, 6 runs; without phpgraph, 3 runs:
 
 | | With phpgraph | Without |
 |---|---:|---:|
-| Correct answers | 3/3 | 3/3 |
-| Tokens per run, median | 86,174 | 174,735 |
-| Tokens per run, range | 86,107 to 130,744 | 172,998 to 175,220 |
-| Time per run | 12.8 to 17.5 s | 11.6 to 12.7 s |
+| Correct answers | 6/6 | 3/3 |
+| Tokens per run, median | 110,254 | 170,660 |
+| Tokens per run, range | 87,643 to 181,273 | 127,193 to 176,783 |
+| Time per run | 15.9 to 27.9 s | 15.9 to 26.8 s |
 
-Where it helps: the same answer for 51 % fewer tokens (median) on the largest project. Where it doesn't: on the 5 other
-impact tasks, on smaller projects, phpgraph used 1 % to 56 % more tokens, and on this task time was not better.
+Where it helps: the same answer for 35 % fewer tokens (median) on the largest project; 3 runs out of 6 answered from
+`impact_of` alone, the others checked it with one to three searches. Where it doesn't: on the 6 impact tasks of the benchmark,
+with 2.2.0, phpgraph gave more right answers (17/18 against 15/18) but used 9.8 % more tokens in total, from −30 % to
++36 % per task, and time was not better. Results vary from run to run: with 2.2.0 the same Akeneo task took 87,000 to
+222,000 tokens.
 Every result, grouped by version, with the method: [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
 ## Quick start

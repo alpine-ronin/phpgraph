@@ -40,19 +40,22 @@ pas su relier est signalé.
 ## Où il aide et où il n'aide pas
 
 Akeneo PIM (8 416 fichiers PHP), tâche : *lister toutes les classes à modifier quand
-`GetCategoryInterface::byCode()` prend un second paramètre*. Claude Code 2.1.323 avec Sonnet, branche de
-développement de phpgraph 2.1.0, 3 exécutions avec phpgraph et 3 sans :
+`GetCategoryInterface::byCode()` prend un second paramètre*. Claude Code 2.1.325 avec Sonnet, 15 novembre 2026 :
+phpgraph 2.3.0, 6 exécutions ; sans phpgraph, 3 exécutions :
 
 | | Avec phpgraph | Sans |
 |---|---:|---:|
-| Réponses correctes | 3/3 | 3/3 |
-| Tokens par exécution, médiane | 86 174 | 174 735 |
-| Tokens par exécution, plage | 86 107 à 130 744 | 172 998 à 175 220 |
-| Durée par exécution | 12,8 à 17,5 s | 11,6 à 12,7 s |
+| Réponses correctes | 6/6 | 3/3 |
+| Tokens par exécution, médiane | 110 254 | 170 660 |
+| Tokens par exécution, plage | 87 643 à 181 273 | 127 193 à 176 783 |
+| Durée par exécution | 15,9 à 27,9 s | 15,9 à 26,8 s |
 
-Où il aide : la même réponse avec 51 % de tokens en moins (médiane) sur le plus grand projet. Où il n'aide pas : sur
-les 5 autres tâches d'impact, sur des projets plus petits, phpgraph a utilisé de 1 % à 56 % de tokens en plus, et sur
-cette tâche la durée n'était pas meilleure. Tous les résultats, groupés par version, avec la méthode :
+Où il aide : la même réponse avec 35 % de tokens en moins (médiane) sur le plus grand projet ; 3 exécutions sur 6 ont
+répondu avec `impact_of` seul, les autres l'ont vérifié par une à trois recherches. Où il n'aide pas : sur les 6 tâches
+d'impact du benchmark, avec 2.2.0, phpgraph a donné plus de bonnes réponses (17/18 contre 15/18) mais a utilisé 9,8 %
+de tokens en plus au total, de −30 % à +36 % selon la tâche, et la durée n'était pas meilleure. Les résultats varient
+d'une exécution à l'autre : avec 2.2.0, la même tâche Akeneo a pris de 87 000 à 222 000 tokens.
+Tous les résultats, groupés par version, avec la méthode :
 [docs/BENCHMARKS.md](docs/BENCHMARKS.md) (en anglais).
 
 ## Démarrage rapide
