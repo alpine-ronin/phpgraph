@@ -255,6 +255,22 @@ final class GraphQuery
         return $this->summary;
     }
 
+    /**
+     * Where a method name is called on a receiver of unknown type, anywhere in the project: those calls may go to any
+     * method of that name. Null when the graph does not say (built by an earlier version).
+     *
+     * @return ?array<string, list<int>> file => lines (0: not known)
+     */
+    public function unresolvedCalls(string $method): ?array
+    {
+        $sites = $this->summary?->unresolvedCalls;
+        if ($sites === null) {
+            return null;
+        }
+
+        return array_map(static fn (string $lines): array => array_map('intval', explode(',', $lines)), $sites[strtolower($method)] ?? []);
+    }
+
     public function graph(): Graph
     {
         return $this->graph;
