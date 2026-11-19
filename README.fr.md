@@ -5,13 +5,13 @@
   </picture>
 </h1>
 
-<p align="center"><b>Le graphe de connaissances de votre code PHP, pour les agents IA.</b></p>
+<p align="center"><b>Demandez à votre agent « qu'est-ce qui casse si je change ça ? » dans un projet PHP, et obtenez les appelants que grep ne voit pas :<br>à travers les interfaces, le conteneur de services, les bus de messages et les routes.</b></p>
 
 <p align="center">
   <a href="https://github.com/alpine-ronin/phpgraph/actions/workflows/ci.yml"><img src="https://github.com/alpine-ronin/phpgraph/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://packagist.org/packages/alpine-ronin/phpgraph"><img src="https://img.shields.io/packagist/v/alpine-ronin/phpgraph" alt="Version Packagist"></a>
   <a href="https://packagist.org/packages/alpine-ronin/phpgraph"><img src="https://img.shields.io/packagist/dt/alpine-ronin/phpgraph" alt="Téléchargements"></a>
-  <img src="https://img.shields.io/badge/php-%3E%3D8.5-777bb4" alt="PHP 8.5+ pour l'exécuter depuis les sources">
+  <img src="https://img.shields.io/badge/php-8.5%2B%20(PHAR%2C%20Composer)-777bb4" alt="PHP 8.5+ pour le PHAR et Composer ; l'exécutable n'en demande pas">
   <a href="https://github.com/alpine-ronin/phpgraph/blob/main/LICENSE"><img src="https://img.shields.io/badge/licence-MIT-blue" alt="Licence : MIT"></a>
 </p>
 
@@ -19,12 +19,27 @@
 
 ---
 
-Un agent de code dans un projet PHP qu'il ne connaît pas cherche des noms avec grep, lit fichier après fichier, et
-devine quand la réponse passe par quelque chose qu'une recherche de noms ne montre pas : une interface, le conteneur
-de services, un bus de messages, une route. phpgraph analyse le projet une fois et donne la réponse à l'agent à
-partir d'un graphe, par MCP, en un appel. Dans les benchmarks, il a été rentable sur le plus grand projet mesuré,
-pour une question sur l'impact d'un changement ; sur des projets plus petits, la même question a coûté plus de tokens
-avec lui.
+En PHP, le code qui exécute une méthode est rarement celui qui la nomme. Les appelants tiennent une interface, le
+conteneur décide de la classe qu'ils reçoivent, un bus porte le message à son handler, une chaîne de route mène à un
+contrôleur. Un agent de code qui cherche des noms avec grep doit reconstruire cette chaîne fichier par fichier, et
+devine parfois. phpgraph analyse le projet une fois et répond à partir d'un graphe, par MCP, en un appel.
+
+**Exemple : Sylius, `OrderPromotionProcessor::process()`.** Chercher le nom de la classe trouve deux fichiers : la
+classe et sa définition de service. Aucun appelant ne la nomme : tous tiennent `OrderProcessorInterface`, et le
+conteneur leur donne un composite qui exécute, entre autres, le processeur de promotions. Un appel à `impact_of` (`phpgraph impact` affiche la même chose) :
+
+```text
+21 classes up to 3 relations away, 0 routes, 0 more through the state; 43 tests, 0 through the state; 1 helpers.
+
+Direct dependents:
+  OrderPromotionCodeAssigner (Sylius\Bundle\ApiBundle\Assigner) [through OrderProcessorInterface::process()]: assign L41
+  BlameCartHandler (Sylius\Bundle\ApiBundle\CommandHandler\Cart) [through OrderProcessorInterface::process()]: __invoke L63
+  OrderModifier (Sylius\Component\Order\Modifier) [through OrderProcessorInterface::process()]: addToOrder L32; removeFromOrder L39
+  … 5 more, then 13 classes 2 or 3 relations away and the tests to run
+```
+
+`ProcessOrderListener` tient la même interface mais n'est pas listé : la configuration lui donne le processeur de
+paiement.
 
 ## Démo
 
