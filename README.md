@@ -10,7 +10,7 @@
 <p align="center">
   <a href="https://github.com/alpine-ronin/phpgraph/actions/workflows/ci.yml"><img src="https://github.com/alpine-ronin/phpgraph/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://packagist.org/packages/alpine-ronin/phpgraph"><img src="https://img.shields.io/packagist/v/alpine-ronin/phpgraph" alt="Packagist version"></a>
-  <a href="https://packagist.org/packages/alpine-ronin/phpgraph"><img src="https://img.shields.io/packagist/dt/alpine-ronin/phpgraph" alt="Downloads"></a>
+  <a href="https://github.com/alpine-ronin/phpgraph/releases"><img src="https://img.shields.io/github/downloads/alpine-ronin/phpgraph/total" alt="Release downloads"></a>
   <img src="https://img.shields.io/badge/php-8.5%2B%20(PHAR%2C%20Composer)-777bb4" alt="PHP 8.5+ for the PHAR and Composer; the executable needs no PHP">
   <a href="https://github.com/alpine-ronin/phpgraph/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
 </p>
