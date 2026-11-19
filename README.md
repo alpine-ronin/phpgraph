@@ -5,13 +5,13 @@
   </picture>
 </h1>
 
-<p align="center"><b>A knowledge graph of your PHP codebase, for AI coding agents.</b></p>
+<p align="center"><b>Ask your agent "what breaks if I change this?" in a PHP codebase, and get the callers grep can't see:<br>through interfaces, the service container, message buses and routes.</b></p>
 
 <p align="center">
   <a href="https://github.com/alpine-ronin/phpgraph/actions/workflows/ci.yml"><img src="https://github.com/alpine-ronin/phpgraph/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://packagist.org/packages/alpine-ronin/phpgraph"><img src="https://img.shields.io/packagist/v/alpine-ronin/phpgraph" alt="Packagist version"></a>
   <a href="https://packagist.org/packages/alpine-ronin/phpgraph"><img src="https://img.shields.io/packagist/dt/alpine-ronin/phpgraph" alt="Downloads"></a>
-  <img src="https://img.shields.io/badge/php-%3E%3D8.5-777bb4" alt="PHP 8.5+ to run from source">
+  <img src="https://img.shields.io/badge/php-8.5%2B%20(PHAR%2C%20Composer)-777bb4" alt="PHP 8.5+ for the PHAR and Composer; the executable needs no PHP">
   <a href="https://github.com/alpine-ronin/phpgraph/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
 </p>
 
@@ -19,11 +19,26 @@
 
 ---
 
-A coding agent in a PHP project it does not know searches names with grep, reads file after file, and guesses when
-the answer goes through something a name search does not show: an interface, the service container, a message bus,
-a route. phpgraph parses the project once and gives the agent the answer from a graph, over MCP, in one call.
-In the benchmarks it paid off on the largest project measured, for a question about the impact of a change; on
-smaller projects the same kind of question cost more tokens with it.
+In PHP, the code that runs a method is rarely the code that names it. Callers hold an interface, the container
+decides which class they get, a bus carries the message to its handler, a route string reaches a controller.
+A coding agent searching names with grep has to rebuild that chain file by file, and sometimes guesses.
+phpgraph parses the project once and answers from a graph, over MCP, in one call.
+
+**Example: Sylius, `OrderPromotionProcessor::process()`.** Searching for the class name finds two files: the class
+and its service definition. No caller names it: they all hold `OrderProcessorInterface`, and the container gives
+them a composite that runs the promotion processor among others. One `impact_of` call (`phpgraph impact` prints the same):
+
+```text
+21 classes up to 3 relations away, 0 routes, 0 more through the state; 43 tests, 0 through the state; 1 helpers.
+
+Direct dependents:
+  OrderPromotionCodeAssigner (Sylius\Bundle\ApiBundle\Assigner) [through OrderProcessorInterface::process()]: assign L41
+  BlameCartHandler (Sylius\Bundle\ApiBundle\CommandHandler\Cart) [through OrderProcessorInterface::process()]: __invoke L63
+  OrderModifier (Sylius\Component\Order\Modifier) [through OrderProcessorInterface::process()]: addToOrder L32; removeFromOrder L39
+  … 5 more, then 13 classes 2 or 3 relations away and the tests to run
+```
+
+`ProcessOrderListener` holds the same interface but is not listed: the configuration gives it the payment processor.
 
 ## Demo
 
