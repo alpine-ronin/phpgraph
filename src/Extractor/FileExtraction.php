@@ -82,6 +82,9 @@ final readonly class FileExtraction
      *                                                when not read
      * @param list<array{string, ?string}> $containerBindings Laravel container key => the class bound to it, null when
      *                                                       the binding is not read (`bind('steam', $factory)`)
+     * @param list<array{string, string, string}> $modelRelations method => the Eloquent relation method it calls on
+     *                                                       `$this` and the model class it names
+     *                                                       (`hasMany(Page::class)`), a model or not
      */
     public function __construct(
         public array $nodes,
@@ -126,6 +129,7 @@ final readonly class FileExtraction
         public array $serviceDecorations = [],
         public array $facadeAccessors = [],
         public array $containerBindings = [],
+        public array $modelRelations = [],
     ) {
     }
 }

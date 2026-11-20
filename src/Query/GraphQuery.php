@@ -89,7 +89,7 @@ final class GraphQuery
      */
     private const EXPAND_WEIGHTS = [
         'handled_by' => 3, 'calls' => 3, 'dispatches' => 3, 'receives' => 3, 'requests' => 3, 'reads_state_of' => 2,
-        'implements' => 2, 'extends' => 2, 'overrides' => 2, 'has_method' => 2, 'instantiates' => 1, 'references' => 1,
+        'implements' => 2, 'extends' => 2, 'overrides' => 2, 'has_method' => 2, 'instantiates' => 1, 'references' => 1, 'relates_to' => 2,
     ];
 
     /**

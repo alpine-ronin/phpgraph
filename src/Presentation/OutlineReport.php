@@ -500,6 +500,7 @@ final class OutlineReport
             ReasonKind::UsedBy => 'used by ' . $via,
             ReasonKind::Family => \sprintf('family: %d members use the core', $reason->count ?? 0),
             ReasonKind::Called => 'by ' . $via,
+            ReasonKind::Related => $reason->relation . ' by ' . $via,
         };
 
         return ' [' . $text . ($reason->reduced ? ', what the core calls only' : '') . ']';
@@ -784,7 +785,7 @@ final class OutlineReport
     /**
      * A class of the core with the facts its source gave, those it gave none of left out.
      *
-     * @return array{id: string, reason?: array{kind: string, via?: string, count?: int, reduced?: true}, kind?: string, modifiers?: list<string>, summary?: string, signatures?: list<string>, constants?: array<string, string>, cases?: array<string, string>, properties?: array<string, string>}
+     * @return array{id: string, reason?: array{kind: string, via?: string, count?: int, reduced?: true, relation?: string}, kind?: string, modifiers?: list<string>, summary?: string, signatures?: list<string>, constants?: array<string, string>, cases?: array<string, string>, properties?: array<string, string>}
      */
     private function coreClassData(string $class): array
     {

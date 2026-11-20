@@ -33,6 +33,9 @@ enum ReasonKind: string
     /** An interface or base class whose members mostly use the core: the family joins, not each member. */
     case Family = 'family';
 
+    /** A model a seed declares an Eloquent relation to (`hasMany(Page::class)`): named even when of a family. */
+    case Related = 'related';
+
     /** The class of the method outlined. */
     case Start = 'start';
 

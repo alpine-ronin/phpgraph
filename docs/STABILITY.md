@@ -61,10 +61,10 @@ Format 2: `{"version": 2, "meta": {...}, "nodes": [...], "edges": [...]}`.
   multi-service repository (`billing@App\Domain\Order`).
 - An edge: `source`, `target`, `relation`, `confidence`, and when known `lines` (`"12,40"`, the source lines) and
   `via` (what carries it: `tagged_iterator app.rule`, `tagged_locator app.use_case`, `through <service id>` or `service <id>` (one of several services of a class) on a
-  `receives` edge; `closure of <method>` on a `calls` edge from a method running a closure it receives; `named: severity, path` on a call written with named arguments).
+  `receives` edge; `closure of <method>` on a `calls` edge from a method running a closure it receives; `named: severity, path` on a call written with named arguments; the Eloquent relation method, `hasMany`, on a `relates_to` edge).
 - Relations: `defines`, `imports`, `extends`, `implements`, `uses_trait`, `has_method`, `overrides`, `instantiates`,
   `calls`, `references`, `dispatches`, `handled_by`, `contract`, `requests`, `receives`, `reads_state_of`,
-  `implemented_by` (since 1.2.0), `autowires` (since 2.2.0).
+  `implemented_by` (since 1.2.0), `autowires` (since 2.2.0), `relates_to` (since 2.4.0).
 - Confidence: `EXTRACTED` (read in the code or the configuration), `INFERRED` (resolved from declared types or
   the shape of the code), `AMBIGUOUS` (a guess, labelled as such).
 

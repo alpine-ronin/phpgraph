@@ -28,6 +28,8 @@ use PhpGraph\Vendor\VendorSignatures;
 
 final class GraphBuilder
 {
+    private const ELOQUENT_MODEL = 'Illuminate\\Database\\Eloquent\\Model';
+
     /**
      * @param bool     $readVendor read the signatures of dependency classes (vendor/) so call chains go through them
      * @param int|null $workers    processes parsing the files, null for one per processor (ParallelExtraction)
@@ -221,6 +223,8 @@ final class GraphBuilder
         $fileIds = [];
         /** @var list<array{string, TypeExpr}> $propertyReads */
         $propertyReads = [];
+        /** @var list<array{string, string, string}> $modelRelations method => its Eloquent relation method and model */
+        $modelRelations = [];
         // By reference: both are filled while the files are read, the helpers are evaluated after.
         $configuration = new ConfigurationEvaluator(function (string $constant, string $file) use (&$fileIds, &$constants): ?string {
             return isset($fileIds[$file]) ? $constants[$this->qualifiedMember($constant, $fileIds[$file])] ?? null : null;
@@ -342,6 +346,9 @@ final class GraphBuilder
             foreach ($extraction->propertyReads as [$reader, $property]) {
                 $propertyReads[] = [$id($reader), $property->map($id, $mapped)];
             }
+            foreach ($extraction->modelRelations as [$method, $kind, $related]) {
+                $modelRelations[] = [$id($method), $kind, $id($related)];
+            }
             $fileIds[(string) $path] = $id;
             $member = fn (string $name): string => str_contains($name, '::') ? $this->qualifiedMember($name, $id) : $id($name);
             foreach ($extraction->configurationHelpers as $helper => $definition) {
@@ -442,6 +449,12 @@ final class GraphBuilder
         }
         $generics = new Generics($templates, $parentArguments, $genericReturns, $genericProperties, $documentedMethods, $mixins, $conditionals, $callables, $binders, $casts, $assertions);
         $types = new TypeResolver($graph, $names, $methodsByClass, $returnTypes, $propertyTypes, $vendor, $returnElements, $generics, Libraries::defaults($generics, $container), $fileReturns);
+
+        foreach ($modelRelations as [$method, $kind, $related]) {
+            if (\in_array(self::ELOQUENT_MODEL, $types->lineage(explode('::', $method)[0]), true)) {
+                $graph->addEdge(new Edge($method, $related, Relation::RelatesTo, Confidence::Extracted, via: $kind));
+            }
+        }
 
         // A method reading a property typed as an enum (`$violation->type`) uses that enum: what it outputs depends on it.
         foreach ($propertyReads as [$reader, $property]) {

@@ -854,7 +854,7 @@ final class TextPresenter
      * The relations of a node, the most telling first.
      */
     private const EXPLAIN_ORDER = [
-        'handled_by', 'calls', 'dispatches', 'requests', 'receives', 'reads_state_of', 'extends', 'implements', 'uses_trait',
+        'handled_by', 'calls', 'dispatches', 'requests', 'receives', 'reads_state_of', 'relates_to', 'extends', 'implements', 'uses_trait',
         'overrides', 'instantiates', 'references', 'contract', 'has_method', 'defines', 'imports',
     ];
 

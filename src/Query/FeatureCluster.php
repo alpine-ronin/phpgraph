@@ -42,6 +42,9 @@ final class FeatureCluster
 
     private const ROUNDS = 4;
 
+    /** Eloquent relations to models attached to any model (comments, tags, activity): not the feature of one. */
+    private const POLYMORPHIC = ['morphOne', 'morphMany', 'morphToMany'];
+
     private const STRONG = [
         Relation::Calls, Relation::Instantiates, Relation::References, Relation::Receives, Relation::Extends,
         Relation::Implements, Relation::Dispatches, Relation::HandledBy, Relation::ReadsStateOf,
@@ -89,6 +92,19 @@ final class FeatureCluster
         $followed = array_map(static fn (): bool => true, $core);
         // The classes about the question: the seeds, their module, and those on the topic that joined.
         $anchors = $core;
+        // The models a seed relates to are named, but out of its module they are no way in, and one used by many is
+        // not named: the User owning every record is no part of a page revision.
+        $related = [];
+        foreach ($seeds as $seed) {
+            foreach ($this->relatedModels($seed) as $model => $reason) {
+                if (!isset($core[$model]) && $this->isHub($model)) {
+                    continue;
+                }
+                $core[$model] = true;
+                $reasons[$model] = $reason;
+                $related[$model] = true;
+            }
+        }
 
         $left = [];
         $common = $this->common($stems);
@@ -196,7 +212,8 @@ final class FeatureCluster
         }
 
         // A class asked about stays: it is no member of its parent's family (a controller among the 59 of its base).
-        $asked = array_fill_keys($asked, true);
+        // So does a model a seed relates to: the pages of a book are not one more Entity.
+        $asked = array_fill_keys($asked, true) + $related;
 
         return [
             'core' => array_values(array_filter($classes, static fn (string $class): bool => !isset($members[$class]) || isset($asked[$class]))),
@@ -205,6 +222,46 @@ final class FeatureCluster
             'left' => array_values(array_filter($left, static fn (string $class): bool => !isset($members[$class]))),
             'reasons' => $reasons,
         ];
+    }
+
+    /**
+     * The application models a class declares an Eloquent relation to, by its methods or its parents' (the book of
+     * every BookChild), each with the method declaring it. Not a polymorphic one: the comments of every Entity.
+     *
+     * @return array<string, Reason>
+     */
+    private function relatedModels(string $class): array
+    {
+        $related = [];
+        $lineage = [];
+        for ($current = $class; $current !== null && !isset($lineage[$current]);) {
+            $lineage[$current] = true;
+            $parent = null;
+            foreach ($this->graph->incident($current) as $item) {
+                if (!$item['forward']) {
+                    continue;
+                }
+                if ($item['edge']->relation === Relation::Extends) {
+                    $parentNode = $this->graph->node($item['other']);
+                    $parent = $parentNode !== null && $this->isApplication($parentNode) ? $parentNode->id : null;
+                }
+                if ($item['edge']->relation !== Relation::HasMethod) {
+                    continue;
+                }
+                foreach ($this->graph->incident($item['other']) as $relation) {
+                    $model = $relation['other'];
+                    $node = $this->graph->node($model);
+                    if ($relation['forward'] && $relation['edge']->relation === Relation::RelatesTo && $model !== $class
+                        && !\in_array($relation['edge']->via(), self::POLYMORPHIC, true)
+                        && $node !== null && $this->isApplication($node)) {
+                        $related[$model] ??= new Reason(ReasonKind::Related, $item['other'], relation: $relation['edge']->via());
+                    }
+                }
+            }
+            $current = $parent;
+        }
+
+        return $related;
     }
 
     /**

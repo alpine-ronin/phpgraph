@@ -148,12 +148,13 @@
             "properties": {
                 "kind": {
                     "type": "string",
-                    "description": "Seeds: named (the topic names the class), route (it handles a route named after the topic), topic (its name or namespace carries the topic's words), method (one of its methods does). Joined: module (of a seed's module), uses (it uses a core class), used_by (a core class uses it), family (an interface or base class whose members mostly use the core). A method's outline: start (the class of the method), called (called by a method it runs).",
-                    "enum": ["named", "route", "topic", "method", "module", "uses", "used_by", "family", "start", "called"]
+                    "description": "Seeds: named (the topic names the class), route (it handles a route named after the topic), topic (its name or namespace carries the topic's words), method (one of its methods does). Joined: module (of a seed's module), uses (it uses a core class), used_by (a core class uses it), family (an interface or base class whose members mostly use the core), related (a model a seed declares an Eloquent relation to, named even when of a family). A method's outline: start (the class of the method), called (called by a method it runs).",
+                    "enum": ["named", "route", "topic", "method", "module", "uses", "used_by", "family", "related", "start", "called"]
                 },
                 "via": {"type": "string", "description": "The class, method or route the decision went through."},
                 "count": {"type": "integer", "description": "For a family, its members using the core."},
-                "reduced": {"const": true, "description": "A class used by many, shown with the methods the core calls only."}
+                "reduced": {"const": true, "description": "A class used by many, shown with the methods the core calls only."},
+                "relation": {"type": "string", "description": "For a related model, the Eloquent relation method declaring it (hasMany, belongsTo...)."}
             }
         },
         "coreClass": {

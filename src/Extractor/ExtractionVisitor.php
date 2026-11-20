@@ -135,6 +135,8 @@ final class ExtractionVisitor extends NodeVisitorAbstract
 
     private readonly LaravelBindings $laravel;
 
+    private readonly EloquentRelations $eloquent;
+
     /** @var list<array{string, TypeExpr}> */
     private array $propertyReads = [];
 
@@ -289,6 +291,7 @@ final class ExtractionVisitor extends NodeVisitorAbstract
         $this->bus = new BusExtractor();
         $this->configuration = new ConfigurationHelpers(fn (Name $name): ?string => $this->resolveName($name));
         $this->laravel = new LaravelBindings(fn (Name $name): ?string => $this->resolveName($name));
+        $this->eloquent = new EloquentRelations(fn (Name $name): ?string => $this->resolveName($name));
         $this->inConfigurationDirectory = preg_match('#(^|/)config/#', $path) === 1;
         // Laravel prefixes the routes of routes/api.php with /api.
         $this->http = new RouteExtractor($path, preg_match('#(^|/)routes/api\.php$#', $path) === 1 ? ['api'] : []);
@@ -344,6 +347,7 @@ final class ExtractionVisitor extends NodeVisitorAbstract
             $this->serviceDecorations,
             $this->laravel->accessors(),
             $this->laravel->bindings(),
+            $this->eloquent->relations(),
         );
     }
 
@@ -1798,6 +1802,7 @@ final class ExtractionVisitor extends NodeVisitorAbstract
         if ($node instanceof Expr\MethodCall && $node->name instanceof Identifier) {
             $this->onPossibleServiceDefinition($node);
             $this->configuration->onMethodCall($node);
+            $this->eloquent->onCall($node, $this->currentCallable);
         }
         if ($node instanceof Expr\MethodCall || $node instanceof Expr\StaticCall) {
             $this->laravel->onCall($node);
