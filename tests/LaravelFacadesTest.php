@@ -131,4 +131,80 @@ final class LaravelFacadesTest extends TestCase
 
         self::assertSame(0, $result->facades->facades, 'getFacadeAccessor() alone does not make a facade');
     }
+
+    public function testAnAccessorReturningTwoKeysSaysNothing(): void
+    {
+        $result = $this->buildProject([
+            'app/Support/Steam.php' => self::STEAM,
+            'app/Facades/Steam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class Steam extends Facade { protected static function getFacadeAccessor(): string { if (PHP_OS === "Linux") { return \'linux-steam\'; } return \App\Support\Steam::class; } }',
+            'app/Http/Controller.php' => self::CALLER,
+        ]);
+
+        self::assertFalse($this->hasEdge($result->graph, 'App\Http\Controller::show', 'App\Support\Steam::balance', Relation::Calls), 'the accessor may return another key');
+        self::assertSame(0, $result->facades->facades, 'no key read: no facade counted');
+    }
+
+    public function testAFactoryReturningTwoClassesIsNotRead(): void
+    {
+        $result = $this->buildProject([
+            'app/Support/Steam.php' => self::STEAM,
+            'app/Support/OtherSteam.php' => 'namespace App\Support; class OtherSteam { public function balance(): int { return 1; } }',
+            'app/Facades/Steam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class Steam extends Facade { protected static function getFacadeAccessor(): string { return \'steam\'; } }',
+            'app/Providers/AppServiceProvider.php' => 'namespace App\Providers; use App\Support; use Illuminate\Support\ServiceProvider; class AppServiceProvider extends ServiceProvider { public function register(): void { $this->app->bind(\'steam\', function () { if (PHP_OS === "Linux") { return new Support\OtherSteam(); } return new Support\Steam(); }); } }',
+            'app/Http/Controller.php' => self::CALLER,
+        ]);
+
+        self::assertFalse($this->hasEdge($result->graph, 'App\Http\Controller::show', 'App\Support\Steam::balance', Relation::Calls), 'the factory may build OtherSteam');
+        self::assertSame(["App\\Facades\\Steam ('steam' bound by code not read)"], $result->facades->unresolved, 'the binding is not read');
+    }
+
+    public function testARouteParameterBindingIsNoContainerBinding(): void
+    {
+        $result = $this->buildProject([
+            'app/Support/Steam.php' => self::STEAM,
+            'app/Facades/Steam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class Steam extends Facade { protected static function getFacadeAccessor(): string { return \'steam\'; } }',
+            'routes/web.php' => 'use Illuminate\Support\Facades\Route; Route::bind(\'steam\', fn (string $value) => new \App\Support\Steam());',
+        ]);
+
+        self::assertSame(["App\\Facades\\Steam ('steam' bound nowhere)"], $result->facades->unresolved, 'Route::bind() binds a route parameter');
+    }
+
+    public function testANamedConcreteArgumentIsTheClassBound(): void
+    {
+        $result = $this->buildProject([
+            'app/Support/BalanceInterface.php' => 'namespace App\Support; interface BalanceInterface { public function balance(): int; }',
+            'app/Support/Steam.php' => 'namespace App\Support; class Steam implements BalanceInterface { public function balance(): int { return 0; } }',
+            'app/Facades/Steam.php' => 'namespace App\Facades; use App\Support\BalanceInterface; use Illuminate\Support\Facades\Facade; class Steam extends Facade { protected static function getFacadeAccessor(): string { return BalanceInterface::class; } }',
+            'app/Providers/AppServiceProvider.php' => 'namespace App\Providers; use App\Support\BalanceInterface; use App\Support\Steam; use Illuminate\Support\ServiceProvider; class AppServiceProvider extends ServiceProvider { public function register(): void { $this->app->singleton(BalanceInterface::class, concrete: Steam::class); } }',
+            'app/Http/Controller.php' => self::CALLER,
+        ]);
+
+        self::assertTrue($this->hasEdge($result->graph, 'App\Http\Controller::show', 'App\Support\Steam::balance', Relation::Calls, Confidence::Inferred), 'concrete: names the class, not the interface itself');
+    }
+
+    public function testASubclassWithAKeyNotFollowedDoesNotGetItsParentsClass(): void
+    {
+        $result = $this->buildProject([
+            'app/Support/Steam.php' => self::STEAM,
+            'app/Facades/BaseSteam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class BaseSteam extends Facade { protected static function getFacadeAccessor(): string { return \App\Support\Steam::class; } }',
+            'app/Facades/Steam.php' => 'namespace App\Facades; class Steam extends BaseSteam { protected static function getFacadeAccessor(): string { return \'other-steam\'; } }',
+            'app/Http/Controller.php' => self::CALLER,
+        ]);
+
+        self::assertFalse($this->hasEdge($result->graph, 'App\Http\Controller::show', 'App\Support\Steam::balance', Relation::Calls), 'the subclass calls what other-steam is bound to, unknown');
+        self::assertSame(['App\Facades\BaseSteam (its subclass App\Facades\Steam is not followed)', "App\\Facades\\Steam ('other-steam' bound nowhere)"], $result->facades->unresolved, 'both say why');
+    }
+
+    public function testATestFixtureDeclaringTheFacadeAgainDoesNotReplaceIt(): void
+    {
+        $result = $this->buildProject([
+            'app/Support/Steam.php' => self::STEAM,
+            'app/Facades/Steam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class Steam extends Facade { protected static function getFacadeAccessor(): string { return \App\Support\Steam::class; } }',
+            'tests/Fixtures/Steam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class Steam extends Facade { protected static function getFacadeAccessor(): string { return \Tests\FakeSteam::class; } }',
+            'tests/FakeSteam.php' => 'namespace Tests; class FakeSteam { public function balance(): int { return 9; } }',
+            'app/Http/Controller.php' => self::CALLER,
+        ]);
+
+        self::assertTrue($this->hasEdge($result->graph, 'App\Http\Controller::show', 'App\Support\Steam::balance', Relation::Calls, Confidence::Inferred), 'the declaration the graph keeps');
+    }
 }

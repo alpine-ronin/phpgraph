@@ -23,6 +23,9 @@ final class LaravelBindings
 
     private const BINDING_PROPERTIES = ['bindings', 'singletons'];
 
+    /** Receivers of a `bind()` that is no container binding: `Route::bind('user', ...)`, `$router->bind(...)`. */
+    private const ROUTERS = ['route', 'router'];
+
     /** @var array<string, string> facade class => the container key its accessor returns */
     private array $accessors = [];
 
@@ -57,13 +60,10 @@ final class LaravelBindings
         if (strtolower($method->name->toString()) !== 'getfacadeaccessor') {
             return;
         }
-        $returned = [];
-        foreach ($method->stmts ?? [] as $statement) {
-            if ($statement instanceof Stmt\Return_) {
-                $returned[] = $statement->expr;
-            }
-        }
-        $key = \count($returned) === 1 ? $this->key($returned[0]) : null;
+        // Every return gives the same key, or the facade says nothing: `if (...) { return 'a'; } return 'b';`.
+        $keys = array_map(fn (?Expr $returned): ?string => $this->key($returned), $this->returns($method->stmts ?? []));
+        $unique = array_unique($keys);
+        $key = \count($unique) === 1 ? reset($unique) : null;
         if ($key !== null) {
             $this->accessors[$class] = $key;
         }
@@ -91,32 +91,90 @@ final class LaravelBindings
     }
 
     /**
-     * `bind('key', ...)`, `singleton(X::class)`, `instance('key', new X())`... on any receiver: the container is reached
-     * through `$this->app`, `app()`, `App::` or a variable.
+     * `bind('key', ...)`, `singleton(X::class)`, `instance('key', new X())`... on any receiver but the router: the
+     * container is reached through `$this->app`, `app()`, `App::` or a variable; `Route::bind()` binds a route parameter.
      */
     public function onCall(Expr\MethodCall|Expr\StaticCall $call): void
     {
-        if (!$call->name instanceof AstNode\Identifier || !\in_array($call->name->toLowerString(), self::BINDING_METHODS, true)) {
+        if (!$call->name instanceof AstNode\Identifier || !\in_array($call->name->toLowerString(), self::BINDING_METHODS, true) || $this->isRouter($call)) {
             return;
         }
-        $arguments = [];
+        $positional = $named = [];
+        $unread = false;
         foreach ($call->args as $argument) {
-            if (!$argument instanceof AstNode\Arg || $argument->unpack || $argument->name !== null) {
+            if (!$argument instanceof AstNode\Arg || $argument->unpack) {
+                $unread = true;
                 break;
             }
-            $arguments[] = $argument->value;
+            if ($argument->name !== null) {
+                $named[$argument->name->toLowerString()] = $argument->value;
+            } elseif ($named === []) {
+                $positional[] = $argument->value;
+            }
         }
-        $key = $this->key($arguments[0] ?? null);
+        $key = $this->key($positional[0] ?? $named['abstract'] ?? null);
         if ($key === null) {
             return;
         }
-        $bound = $arguments[1] ?? null;
+        $bound = $positional[1] ?? $named['concrete'] ?? $named['instance'] ?? null;
         if ($bound !== null) {
             $this->bindings[] = [$key, $this->boundClass($bound)];
+        } elseif ($unread) {
+            // `bind(Clock::class, ...$arguments)`: the class bound is not read.
+            $this->bindings[] = [$key, null];
         } elseif (str_contains($key, '\\')) {
             // `singleton(Steam::class)`: the class itself.
             $this->bindings[] = [$key, $key];
         }
+    }
+
+    private function isRouter(Expr\MethodCall|Expr\StaticCall $call): bool
+    {
+        if ($call instanceof Expr\StaticCall) {
+            $class = $call->class instanceof Name ? ($this->resolve)($call->class) : null;
+
+            $shortName = $class === null ? null : strtolower(substr((string) strrchr('\\' . $class, '\\'), 1));
+
+            return \in_array($shortName, self::ROUTERS, true);
+        }
+        $receiver = $call->var;
+        $name = match (true) {
+            $receiver instanceof Expr\Variable => $receiver->name,
+            $receiver instanceof Expr\PropertyFetch => $receiver->name instanceof AstNode\Identifier ? $receiver->name->toString() : null,
+            default => null,
+        };
+
+        return \is_string($name) && \in_array(strtolower($name), self::ROUTERS, true);
+    }
+
+    /**
+     * The values returned by statements, out of the closures and classes they declare.
+     *
+     * @param array<AstNode> $nodes
+     *
+     * @return list<?Expr>
+     */
+    private function returns(array $nodes): array
+    {
+        $returned = [];
+        foreach ($nodes as $node) {
+            if ($node instanceof Stmt\Return_) {
+                $returned[] = $node->expr;
+                continue;
+            }
+            if ($node instanceof AstNode\FunctionLike || $node instanceof Stmt\ClassLike) {
+                continue;
+            }
+            foreach ($node->getSubNodeNames() as $name) {
+                $child = $node->{$name};
+                $children = array_filter(\is_array($child) ? $child : [$child], static fn (mixed $item): bool => $item instanceof AstNode);
+                foreach ($this->returns($children) as $value) {
+                    $returned[] = $value;
+                }
+            }
+        }
+
+        return $returned;
     }
 
     /**
@@ -147,14 +205,7 @@ final class LaravelBindings
             return $this->instantiated([$value->expr]) ?? $this->returnType($value->returnType);
         }
         if ($value instanceof Expr\Closure) {
-            $returned = [];
-            foreach ($value->stmts as $statement) {
-                if ($statement instanceof Stmt\Return_ && $statement->expr !== null) {
-                    $returned[] = $statement->expr;
-                }
-            }
-
-            return $this->instantiated($returned) ?? $this->returnType($value->returnType);
+            return $this->instantiated($this->returns($value->stmts)) ?? $this->returnType($value->returnType);
         }
 
         return $this->className($value);
@@ -163,7 +214,7 @@ final class LaravelBindings
     /**
      * The class every expression instantiates, when they all instantiate the same one.
      *
-     * @param list<Expr> $expressions
+     * @param list<?Expr> $expressions
      */
     private function instantiated(array $expressions): ?string
     {

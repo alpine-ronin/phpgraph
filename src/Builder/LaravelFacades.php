@@ -26,7 +26,8 @@ final class LaravelFacades
 
     public function addAccessor(string $facade, string $service, string $key): void
     {
-        $this->accessors[$facade] = [$service, $key];
+        // The first declaration, as the graph keeps it: a test fixture declaring the facade again does not replace it.
+        $this->accessors[$facade] ??= [$service, $key];
     }
 
     public function addBinding(string $service, string $key, ?string $class): void
@@ -41,22 +42,34 @@ final class LaravelFacades
     {
         $classes = [];
         $unresolved = [];
-        $facades = 0;
+        $lineages = [];
         foreach ($this->accessors as $facade => [$service, $key]) {
-            if (!$this->isFacade($graph, $facade)) {
+            $lineage = $this->lineage($graph, $facade);
+            if (!\in_array(self::FACADE, array_map('strtolower', $lineage), true)) {
                 continue;
             }
-            ++$facades;
+            $lineages[$facade] = $lineage;
             [$class, $reason] = $this->classOf($graph, $service, $key);
             if ($class !== null) {
                 $classes[$facade] = $class;
             } else {
-                $unresolved[] = \sprintf('%s (%s)', $facade, $reason);
+                $unresolved[$facade] = \sprintf('%s (%s)', $facade, $reason);
             }
         }
-        sort($unresolved);
+        // The calls of a facade go to the target of its nearest parent: a subclass overriding the accessor with a key
+        // not followed would get its parent's, so the parent's is dropped.
+        foreach (array_keys($unresolved) as $facade) {
+            foreach (\array_slice($lineages[$facade], 1) as $parent) {
+                if (isset($classes[$parent])) {
+                    unset($classes[$parent]);
+                    $unresolved[$parent] = \sprintf('%s (its subclass %s is not followed)', $parent, $facade);
+                }
+            }
+        }
+        $reasons = array_values($unresolved);
+        sort($reasons);
 
-        return [$classes, new FacadeStats($facades, \count($classes), \count($unresolved), \array_slice($unresolved, 0, self::SHOWN))];
+        return [$classes, new FacadeStats(\count($lineages), \count($classes), \count($reasons), \array_slice($reasons, 0, self::SHOWN))];
     }
 
     /**
@@ -84,26 +97,27 @@ final class LaravelFacades
         return [$bound[0], ''];
     }
 
-    private function isFacade(Graph $graph, string $class): bool
+    /**
+     * The class, then its parents, nearest first.
+     *
+     * @return list<string>
+     */
+    private function lineage(Graph $graph, string $class): array
     {
-        $seen = [];
-        $parents = [$class];
-        while ($parents !== []) {
-            $current = array_pop($parents);
-            if (isset($seen[$current])) {
-                continue;
-            }
-            $seen[$current] = true;
-            if (strtolower($current) === self::FACADE) {
-                return true;
-            }
+        $lineage = [];
+        $current = $class;
+        while ($current !== null && !\in_array($current, $lineage, true)) {
+            $lineage[] = $current;
+            $parent = null;
             foreach ($graph->incident($current) as $item) {
                 if ($item['forward'] && $item['edge']->relation === Relation::Extends) {
-                    $parents[] = $item['other'];
+                    $parent = $item['other'];
+                    break;
                 }
             }
+            $current = $parent;
         }
 
-        return false;
+        return $lineage;
     }
 }
