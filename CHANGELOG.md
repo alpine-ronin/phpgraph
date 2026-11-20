@@ -6,6 +6,11 @@ phpgraph follows [semantic versioning](https://semver.org) from 1.0.0; what stay
 ## Unreleased
 
 ### Added
+- Laravel facades without `@mixin` or `@method` are followed through `getFacadeAccessor()`: the `X::class` it
+  returns, or the class the service providers bind its key to (`bind('steam', static fn (): Steam => new Steam())`,
+  `singleton()`, `scoped()`, `instance()`, `$bindings`, `$singletons`). Firefly III: +1,289 INFERRED calls, none
+  lost on the corpus; BookStack `impact` of `ThemeService::dispatch()` 1 → 73 classes. `overview` and
+  `meta.summary.facades` (written only when the project has facades) count them and say why one is not followed.
 - `graph.json`: relation `relates_to`, from a method of an Eloquent model to the model of the relation it declares
   (`return $this->hasMany(Page::class)`), the relation method in `via`. `outline` of a model names the models it
   relates to, by its methods or its parent classes', even when they are members of a family (BookStack `Book`: Page,
