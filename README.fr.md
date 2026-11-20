@@ -19,10 +19,10 @@
 
 ---
 
-En PHP, le code qui exécute une méthode est rarement celui qui la nomme. Les appelants tiennent une interface, le
-conteneur décide de la classe qu'ils reçoivent, un bus porte le message à son handler, une chaîne de route mène à un
-contrôleur. Un agent de code qui cherche des noms avec grep doit reconstruire cette chaîne fichier par fichier, et
-devine parfois. phpgraph analyse le projet une fois et répond à partir d'un graphe, par MCP, en un appel.
+En PHP, un appelant nomme rarement la classe qu'il finit par exécuter. Il tient une interface et le conteneur décide
+de la classe qu'il reçoit ; un bus porte un message à son handler ; une chaîne de route mène à un contrôleur. Un
+agent de code qui cherche des noms avec grep doit reconstruire cette chaîne fichier par fichier, et devine parfois.
+phpgraph analyse le projet une fois et répond à partir d'un graphe, par MCP, en un appel.
 
 **Exemple : Sylius, `OrderPromotionProcessor::process()`.** Chercher le nom de la classe trouve deux fichiers : la
 classe et sa définition de service. Aucun appelant ne la nomme : tous tiennent `OrderProcessorInterface`, et le

@@ -19,8 +19,8 @@
 
 ---
 
-In PHP, the code that runs a method is rarely the code that names it. Callers hold an interface, the container
-decides which class they get, a bus carries the message to its handler, a route string reaches a controller.
+In PHP, a caller rarely names the class it ends up running. It holds an interface and the container decides which
+class it gets; a bus carries a message to its handler; a route string reaches a controller.
 A coding agent searching names with grep has to rebuild that chain file by file, and sometimes guesses.
 phpgraph parses the project once and answers from a graph, over MCP, in one call.
 
