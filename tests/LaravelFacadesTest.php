@@ -141,7 +141,7 @@ final class LaravelFacadesTest extends TestCase
         ]);
 
         self::assertFalse($this->hasEdge($result->graph, 'App\Http\Controller::show', 'App\Support\Steam::balance', Relation::Calls), 'the accessor may return another key');
-        self::assertSame(0, $result->facades->facades, 'no key read: no facade counted');
+        self::assertSame(['App\Facades\Steam (accessor not read)'], $result->facades->unresolved, 'reported, not guessed');
     }
 
     public function testAFactoryReturningTwoClassesIsNotRead(): void
@@ -206,5 +206,43 @@ final class LaravelFacadesTest extends TestCase
         ]);
 
         self::assertTrue($this->hasEdge($result->graph, 'App\Http\Controller::show', 'App\Support\Steam::balance', Relation::Calls, Confidence::Inferred), 'the declaration the graph keeps');
+    }
+
+    public function testAnEmptyKeyBesideAnUnreadOneIsNotRead(): void
+    {
+        $result = $this->buildProject([
+            'app/Support/Steam.php' => self::STEAM,
+            'app/Facades/Steam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class Steam extends Facade { protected static function getFacadeAccessor(): string { if (PHP_OS === "Linux") { return \'\'; } return config(\'steam.key\'); } }',
+            'app/Providers/AppServiceProvider.php' => 'namespace App\Providers; use App\Support\Steam; use Illuminate\Support\ServiceProvider; class AppServiceProvider extends ServiceProvider { public function register(): void { $this->app->bind(\'\', Steam::class); } }',
+            'app/Http/Controller.php' => self::CALLER,
+        ]);
+
+        self::assertFalse($this->hasEdge($result->graph, 'App\Http\Controller::show', 'App\Support\Steam::balance', Relation::Calls), 'an empty string is no key');
+        self::assertSame(['App\Facades\Steam (accessor not read)'], $result->facades->unresolved, 'the other return is not read');
+    }
+
+    public function testASubclassWithAnAccessorNotReadDoesNotGetItsParentsClass(): void
+    {
+        $result = $this->buildProject([
+            'app/Support/Steam.php' => self::STEAM,
+            'app/Facades/BaseSteam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class BaseSteam extends Facade { protected static function getFacadeAccessor(): string { return \App\Support\Steam::class; } }',
+            'app/Facades/Steam.php' => 'namespace App\Facades; class Steam extends BaseSteam { protected static function getFacadeAccessor(): string { return config(\'steam.key\'); } }',
+            'app/Http/Controller.php' => self::CALLER,
+        ]);
+
+        self::assertFalse($this->hasEdge($result->graph, 'App\Http\Controller::show', 'App\Support\Steam::balance', Relation::Calls), 'the subclass key comes from the configuration');
+    }
+
+    public function testAFirstDeclarationWithAnAccessorNotReadIsNotReplacedByAFixture(): void
+    {
+        $result = $this->buildProject([
+            'app/Support/Steam.php' => self::STEAM,
+            'app/Facades/Steam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class Steam extends Facade { protected static function getFacadeAccessor(): string { return config(\'steam.key\'); } }',
+            'tests/Fixtures/Steam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class Steam extends Facade { protected static function getFacadeAccessor(): string { return \Tests\FakeSteam::class; } }',
+            'tests/FakeSteam.php' => 'namespace Tests; class FakeSteam { public function balance(): int { return 9; } }',
+            'app/Http/Controller.php' => self::CALLER,
+        ]);
+
+        self::assertFalse($this->hasEdge($result->graph, 'App\Http\Controller::show', 'Tests\FakeSteam::balance', Relation::Calls), 'the fixture is not the declaration the graph keeps');
     }
 }

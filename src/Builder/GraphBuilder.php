@@ -327,7 +327,7 @@ final class GraphBuilder
                 }
             }
             foreach ($extraction->facadeAccessors as $facade => $key) {
-                $facades->addAccessor($id($facade), $service, str_contains($key, '\\') ? $id($key) : $key);
+                $facades->addAccessor($id($facade), $service, $key !== null && str_contains($key, '\\') ? $id($key) : $key);
             }
             // A test binds its fakes: the application's facades go to what the providers bind.
             foreach ($isTest ? [] : $extraction->containerBindings as [$key, $class]) {

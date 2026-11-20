@@ -18,16 +18,19 @@ final class LaravelFacades
 
     private const SHOWN = 10;
 
-    /** @var array<string, array{string, string}> facade => [its service, the key its accessor returns] */
+    /** @var array<string, array{string, ?string}> facade => [its service, the key its accessor returns, null if not read] */
     private array $accessors = [];
 
     /** @var array<string, array<string, list<?string>>> service => key => the classes bound to it, null when not read */
     private array $bindings = [];
 
-    public function addAccessor(string $facade, string $service, string $key): void
+    public function addAccessor(string $facade, string $service, ?string $key): void
     {
-        // The first declaration, as the graph keeps it: a test fixture declaring the facade again does not replace it.
-        $this->accessors[$facade] ??= [$service, $key];
+        // The first declaration, as the graph keeps it, even unread: a test fixture declaring the facade again does not
+        // replace it.
+        if (!\array_key_exists($facade, $this->accessors)) {
+            $this->accessors[$facade] = [$service, $key];
+        }
     }
 
     public function addBinding(string $service, string $key, ?string $class): void
@@ -49,7 +52,7 @@ final class LaravelFacades
                 continue;
             }
             $lineages[$facade] = $lineage;
-            [$class, $reason] = $this->classOf($graph, $service, $key);
+            [$class, $reason] = $key === null ? [null, 'accessor not read'] : $this->classOf($graph, $service, $key);
             if ($class !== null) {
                 $classes[$facade] = $class;
             } else {

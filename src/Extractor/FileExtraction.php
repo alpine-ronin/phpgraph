@@ -77,8 +77,9 @@ final readonly class FileExtraction
      *                                             its decoration priority]: `->decorate('app.mailer', null, 10)`
      * @param ?TypeExpr $returned what the file returns to the script requiring it, `return $app;`: null when it
      *                            returns nothing
-     * @param array<string, string> $facadeAccessors Laravel facade class => the container key its
-     *                                               `getFacadeAccessor()` returns (a class name or a string)
+     * @param array<string, ?string> $facadeAccessors Laravel facade class => the container key its
+     *                                                `getFacadeAccessor()` returns (a class name or a string), null
+     *                                                when not read
      * @param list<array{string, ?string}> $containerBindings Laravel container key => the class bound to it, null when
      *                                                       the binding is not read (`bind('steam', $factory)`)
      */

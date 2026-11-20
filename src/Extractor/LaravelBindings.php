@@ -26,7 +26,7 @@ final class LaravelBindings
     /** Receivers of a `bind()` that is no container binding: `Route::bind('user', ...)`, `$router->bind(...)`. */
     private const ROUTERS = ['route', 'router'];
 
-    /** @var array<string, string> facade class => the container key its accessor returns */
+    /** @var array<string, ?string> facade class => the container key its accessor returns, null when not read */
     private array $accessors = [];
 
     /** @var list<array{string, ?string}> container key => the class bound to it, null when not read */
@@ -40,7 +40,7 @@ final class LaravelBindings
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, ?string>
      */
     public function accessors(): array
     {
@@ -60,13 +60,12 @@ final class LaravelBindings
         if (strtolower($method->name->toString()) !== 'getfacadeaccessor') {
             return;
         }
-        // Every return gives the same key, or the facade says nothing: `if (...) { return 'a'; } return 'b';`.
+        // Every return gives the same key, or the key is not read (`if (...) { return 'a'; } return config('b');`):
+        // recorded all the same, so that the facade does not take a parent's key nor another declaration's.
         $keys = array_map(fn (?Expr $returned): ?string => $this->key($returned), $this->returns($method->stmts ?? []));
-        $unique = array_unique($keys);
-        $key = \count($unique) === 1 ? reset($unique) : null;
-        if ($key !== null) {
-            $this->accessors[$class] = $key;
-        }
+        $unique = array_values(array_unique(array_filter($keys, 'is_string')));
+        $isRead = $keys !== [] && !\in_array(null, $keys, true) && \count($unique) === 1;
+        $this->accessors[$class] = $isRead ? $unique[0] : null;
     }
 
     /**
@@ -183,7 +182,9 @@ final class LaravelBindings
     private function key(?Expr $expr): ?string
     {
         if ($expr instanceof AstNode\Scalar\String_) {
-            return ltrim($expr->value, '\\');
+            $key = ltrim($expr->value, '\\');
+
+            return $key === '' ? null : $key;
         }
 
         return $this->className($expr);
