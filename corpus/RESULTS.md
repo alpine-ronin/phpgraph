@@ -6,17 +6,18 @@ phpgraph could not type, the main target of type inference work. Arrows compare 
 
 | Project | Files | Failed | Duplicates | Classes | Methods | Edges | Vendor files read | Seconds | Memory MB |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| php-ddd-example | 304 | 0 | 0 | 295 | 770 | 4182 | 111 | 0.63 | 34 |
-| sylius | 4946 | 0 | 1 | 4449 | 23781 | 140919 | 681 | 6.03 | 610 |
-| akeneo-pim | 8416 | 0 | 1 | 8447 | 38595 | 218703 | 767 | 9.78 | 896 |
-| prestashop | 7850 | 0 | 5 | 7291 | 32895 | 192761 | 648 | 9.59 | 774 |
-| ecotone-quickstart | 583 | 0 | 5 | 443 | 901 | 6823 | 76 | 0.89 | 44 |
-| bookstack | 1513 | 0 | 0 | 698 | 4076 | 22835 | 395 | 3.26 | 170 |
-| wordpress | 1899 | 0 | 50 | 840 | 7580 | 43375 | 0 | 3.95 | 191 |
-| laravel-rabbitmq-microservices | 127 | 0 | 0 | 71 | 74 | 762 | 124 | 0.67 | 40 |
-| art-gallery | 266 | 0 | 0 | 140 | 148 | 1693 | 122 | 0.97 | 48 |
-| ticket-booking | 366 | 0 | 0 | 291 | 737 | 5040 | 223 | 1.01 | 38 |
-| stayhub | 260 | 0 | 0 | 112 | 323 | 2035 | 156 | 2.11 | 54 |
+| php-ddd-example | 304 | 0 | 0 | 295 | 770 | 4182 | 111 | 0.60 | 34 |
+| sylius | 4946 | 0 | 1 | 4449 | 23781 | 140919 | 681 | 8.12 | 612 |
+| akeneo-pim | 8416 | 0 | 1 | 8447 | 38595 | 218703 | 767 | 11.74 | 900 |
+| prestashop | 7850 | 0 | 5 | 7291 | 32895 | 192761 | 648 | 11.00 | 774 |
+| ecotone-quickstart | 583 | 0 | 5 | 443 | 901 | 6823 | 76 | 0.97 | 44 |
+| bookstack | 1513 | 0 | 0 | 698 | 4076 | 22837 | 395 | 3.77 | 170 |
+| wordpress | 1899 | 0 | 50 | 840 | 7580 | 43375 | 0 | 3.92 | 191 |
+| laravel-rabbitmq-microservices | 127 | 0 | 0 | 71 | 74 | 762 | 124 | 0.70 | 40 |
+| art-gallery | 266 | 0 | 0 | 140 | 148 | 1693 | 122 | 0.94 | 50 |
+| ticket-booking | 366 | 0 | 0 | 291 | 737 | 5040 | 223 | 0.94 | 38 |
+| stayhub | 260 | 0 | 0 | 112 | 323 | 2035 | 156 | 1.40 | 54 |
+| firefly-iii | 1382 | 0 | 1 | 1274 | 5934 | 42529 | 390 | 2.95 | 221 |
 
 ## Method calls in application code
 
@@ -29,12 +30,13 @@ The main indicator: test code (see `TestFiles`) is left out.
 | akeneo-pim | 33868 | 54.8% | 0.5% | 38.2% | 6.6% | 1.5% |
 | prestashop | 76228 | 75.7% | 0.5% | 21.8% | 2.0% | 0.5% |
 | ecotone-quickstart | 1521 | 17.4% | 0.1% | 75.1% | 7.3% | 7.2% |
-| bookstack | 7498 | 46.7% | 1.2% | 49.6% | 2.5% | 1.1% |
+| bookstack | 7498 | 47.0% | 1.1% | 49.3% | 2.5% | 1.1% |
 | wordpress | 27019 | 92.2% | 2.7% | 2.8% | 2.3% | 0.2% |
 | laravel-rabbitmq-microservices | 161 | 1.2% | 3.1% | 90.7% | 5.0% | 1.2% |
 | art-gallery | 684 | 3.5% | 0.1% | 89.6% | 6.7% | 3.8% |
 | ticket-booking | 1661 | 35.5% | 0.7% | 58.7% | 5.1% | 2.8% |
 | stayhub | 1089 | 26.5% | 0.0% | 71.7% | 1.7% | 0.5% |
+| firefly-iii | 29234 | 34.6% | 0.1% | 59.0% | 6.4% | 3.4% |
 
 ## Method calls in test code
 
@@ -47,12 +49,13 @@ Mocks and specs make test code harder to type; read it apart.
 | akeneo-pim | 125191 | 35.4% | 1.2% | 38.3% | 25.2% | 8.0% |
 | prestashop | 40982 | 52.3% | 0.2% | 45.0% | 2.5% | 0.7% |
 | ecotone-quickstart | 415 | 14.7% | 0.0% | 85.3% | 0.0% | 0.0% |
-| bookstack | 18033 | 33.1% | 1.0% | 56.3% | 9.5% | 3.0% |
+| bookstack | 18033 | 33.2% | 1.0% | 56.2% | 9.5% | 3.0% |
 | wordpress | 0 | - | - | - | - | - |
 | laravel-rabbitmq-microservices | 10 | 0.0% | 0.0% | 100.0% | 0.0% | 0.0% |
 | art-gallery | 268 | 0.0% | 0.7% | 59.7% | 39.6% | 0.0% |
 | ticket-booking | 28 | 10.7% | 0.0% | 89.3% | 0.0% | 0.0% |
 | stayhub | 343 | 0.0% | 0.0% | 98.0% | 2.0% | 0.0% |
+| firefly-iii | 1497 | 12.4% | 0.4% | 86.0% | 1.2% | 1.1% |
 
 ## Method calls in all code
 
@@ -65,12 +68,13 @@ Application and test code together.
 | akeneo-pim | 159059 | 39.5% | 1.0% | 38.3% | 21.2% | 6.6% |
 | prestashop | 117210 | 67.5% | 0.4% | 29.9% | 2.2% | 0.6% |
 | ecotone-quickstart | 1936 | 16.8% | 0.1% | 77.3% | 5.7% | 5.7% |
-| bookstack | 25531 | 37.1% | 1.1% | 54.4% | 7.5% | 2.4% |
+| bookstack | 25531 | 37.3% | 1.1% | 54.2% | 7.5% | 2.4% |
 | wordpress | 27019 | 92.2% | 2.7% | 2.8% | 2.3% | 0.2% |
 | laravel-rabbitmq-microservices | 171 | 1.2% | 2.9% | 91.2% | 4.7% | 1.2% |
 | art-gallery | 952 | 2.5% | 0.3% | 81.2% | 16.0% | 2.7% |
 | ticket-booking | 1689 | 35.1% | 0.7% | 59.2% | 5.0% | 2.8% |
 | stayhub | 1432 | 20.2% | 0.0% | 78.0% | 1.8% | 0.3% |
+| firefly-iii | 30731 | 33.5% | 0.1% | 60.3% | 6.1% | 3.3% |
 
 ## Architecture of application code
 
@@ -89,6 +93,7 @@ Class dependencies breaking the default layer rules, and pairs of bounded contex
 | art-gallery | 0 | 0 | - |
 | ticket-booking | 0 | 0 | - |
 | stayhub | 0 | 0 | - |
+| firefly-iii | 0 | 0 | - |
 
 ## HTTP and services
 
@@ -107,6 +112,7 @@ Routes and the controllers handling them; HTTP calls of application code reachin
 | art-gallery | 5 | 39 | 35 | 0 | 0 | 1 | 0 | 0 | 1 |
 | ticket-booking | 6 | 13 | 13 | 0 | 0 | 0 | 0 | 0 | 0 |
 | stayhub | 8 | 52 | 38 | 0 | 0 | 0 | 0 | 0 | 0 |
+| firefly-iii | 0 | 639 | 2 | 0 | 3 | 1 | 0 | 0 | 0 |
 
 ## API schemas
 
@@ -126,6 +132,7 @@ documents no route implements describe another API: the calls of application cod
 | art-gallery | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 | ticket-booking | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 14 | 14 |
 | stayhub | 1 | 45 | 45 | 52 | 7 | 0 | 0 | 0 | 0 |
+| firefly-iii | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
 
 ## Container injections
 
@@ -144,6 +151,7 @@ What the container configuration injects by tag or by id (`receives`), and what 
 | art-gallery | 0 | 0 | 0 | 0 |
 | ticket-booking | 0 | 0 | 0 | 0 |
 | stayhub | 0 | 0 | 0 | 0 |
+| firefly-iii | 0 | 0 | 0 | 0 |
 
 ## Messages in application code
 
@@ -162,3 +170,4 @@ Handlers and sends linked to their message class, by confidence; then what could
 | art-gallery | 0 | 0 | 0 | 0 | 0 | 16 | 0 | 0 | 0 |
 | ticket-booking | 22 | 0 | 0 | 22 | 0 | 0 | 3 | 2 | 12 |
 | stayhub | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| firefly-iii | 0 | 41 | 0 | 207 | 0 | 0 | 5 | 36 | 0 |

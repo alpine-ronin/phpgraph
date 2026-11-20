@@ -720,6 +720,17 @@ final class TextPresenter
             );
         }
 
+        $facades = $summary?->facades;
+        if ($facades !== null && !$facades->isEmpty()) {
+            $lines[] = '';
+            $lines[] = '## Facades';
+            $lines[] = 'Laravel facades of the project: a static call goes to the class behind it (getFacadeAccessor(), the key bound by the service providers), INFERRED.';
+            $lines[] = \sprintf('- %d facades: %d followed to a class.', $facades->facades, $facades->followed);
+            if ($facades->unresolved !== []) {
+                $lines[] = \sprintf('  Not followed: %s%s.', implode('; ', $facades->unresolved), $facades->unresolvedCount > \count($facades->unresolved) ? '; ...' : '');
+            }
+        }
+
         $lines[] = '';
         $lines[] = '## What the graph does not know';
         if ($summary !== null) {

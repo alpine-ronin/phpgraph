@@ -133,6 +133,8 @@ final class ExtractionVisitor extends NodeVisitorAbstract
 
     private readonly ConfigurationHelpers $configuration;
 
+    private readonly LaravelBindings $laravel;
+
     /** @var list<array{string, TypeExpr}> */
     private array $propertyReads = [];
 
@@ -286,6 +288,7 @@ final class ExtractionVisitor extends NodeVisitorAbstract
         $this->chainTypes = new \WeakMap();
         $this->bus = new BusExtractor();
         $this->configuration = new ConfigurationHelpers(fn (Name $name): ?string => $this->resolveName($name));
+        $this->laravel = new LaravelBindings(fn (Name $name): ?string => $this->resolveName($name));
         $this->inConfigurationDirectory = preg_match('#(^|/)config/#', $path) === 1;
         // Laravel prefixes the routes of routes/api.php with /api.
         $this->http = new RouteExtractor($path, preg_match('#(^|/)routes/api\.php$#', $path) === 1 ? ['api'] : []);
@@ -339,6 +342,8 @@ final class ExtractionVisitor extends NodeVisitorAbstract
             $this->assertions,
             $this->returned === [] ? null : TypeExpr::union($this->returned),
             $this->serviceDecorations,
+            $this->laravel->accessors(),
+            $this->laravel->bindings(),
         );
     }
 
@@ -390,6 +395,9 @@ final class ExtractionVisitor extends NodeVisitorAbstract
         }
 
         if ($node instanceof Stmt\Property) {
+            if ($this->currentClass !== null) {
+                $this->laravel->onProperty($this->currentParent, $node);
+            }
             foreach ($this->typeNames($node->type) as $type) {
                 $this->reference($this->owner(), $type);
             }
@@ -761,6 +769,9 @@ final class ExtractionVisitor extends NodeVisitorAbstract
 
         if ($kind === NodeKind::Method && $this->currentClass !== null && str_starts_with(strtolower($node->name->toString()), 'supports')) {
             $this->onSupports($this->currentClass, $node);
+        }
+        if ($node instanceof Stmt\ClassMethod && $this->currentClass !== null) {
+            $this->laravel->onMethod($this->currentClass, $node);
         }
         if ($node instanceof Stmt\ClassMethod && $this->currentClass !== null && \in_array(strtolower($node->name->toString()), self::GUARDS, true)) {
             $this->onGuard($this->currentClass, $node);
@@ -1787,6 +1798,9 @@ final class ExtractionVisitor extends NodeVisitorAbstract
         if ($node instanceof Expr\MethodCall && $node->name instanceof Identifier) {
             $this->onPossibleServiceDefinition($node);
             $this->configuration->onMethodCall($node);
+        }
+        if ($node instanceof Expr\MethodCall || $node instanceof Expr\StaticCall) {
+            $this->laravel->onCall($node);
         }
         // A configuration helper may be called: Wiring::wire($services, 'sales_order', ...).
         if ($node instanceof Expr\StaticCall && $node->class instanceof Name && $node->name instanceof Identifier) {

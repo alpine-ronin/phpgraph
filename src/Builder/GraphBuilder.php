@@ -212,6 +212,7 @@ final class GraphBuilder
         $containerTags = [];
         $containerArguments = [];
         $containerDecorations = [];
+        $facades = new LaravelFacades();
         /** @var array<string, list<?string>> $constructorTypes class => the class of each constructor parameter */
         $constructorTypes = [];
         $routePrefixes = [];
@@ -325,6 +326,13 @@ final class GraphBuilder
                     }, explode(',', $signature));
                 }
             }
+            foreach ($extraction->facadeAccessors as $facade => $key) {
+                $facades->addAccessor($id($facade), $service, str_contains($key, '\\') ? $id($key) : $key);
+            }
+            // A test binds its fakes: the application's facades go to what the providers bind.
+            foreach ($isTest ? [] : $extraction->containerBindings as [$key, $class]) {
+                $facades->addBinding($service, str_contains($key, '\\') ? $id($key) : $key, $class === null ? null : $id($class));
+            }
             foreach ($extraction->serviceDecorations as $decorator => $decoration) {
                 $containerDecorations[$service][$decorator] = $decoration;
             }
@@ -424,6 +432,11 @@ final class GraphBuilder
         }
 
         $methodsByClass = $this->methodsByClass($graph);
+        // A facade forwards its static calls to the class behind it, after its own `@mixin` classes.
+        [$facadeClasses, $facadeStats] = $facades->resolve($graph);
+        foreach ($facadeClasses as $facade => $class) {
+            $mixins[$facade] = [...$mixins[$facade] ?? [], $class];
+        }
         $generics = new Generics($templates, $parentArguments, $genericReturns, $genericProperties, $documentedMethods, $mixins, $conditionals, $callables, $binders, $casts, $assertions);
         $types = new TypeResolver($graph, $names, $methodsByClass, $returnTypes, $propertyTypes, $vendor, $returnElements, $generics, Libraries::defaults($generics, $container), $fileReturns);
 
@@ -538,6 +551,7 @@ final class GraphBuilder
             $apiSchemas,
             $actionStats,
             $counter->unresolvedCalls(),
+            $facadeStats,
         );
     }
 

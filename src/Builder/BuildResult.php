@@ -41,6 +41,7 @@ final readonly class BuildResult
         public ApiSchemaStats $apiSchemas = new ApiSchemaStats(),
         public ActionStats $actions = new ActionStats(),
         public array $unresolvedCalls = [],
+        public FacadeStats $facades = new FacadeStats(),
     ) {
     }
 
