@@ -245,4 +245,19 @@ final class LaravelFacadesTest extends TestCase
 
         self::assertFalse($this->hasEdge($result->graph, 'App\Http\Controller::show', 'Tests\FakeSteam::balance', Relation::Calls), 'the fixture is not the declaration the graph keeps');
     }
+
+    public function testAFacadeInheritingItsAccessorIsNotGivenAFixturesAccessor(): void
+    {
+        $result = $this->buildProject([
+            'app/Support/Steam.php' => self::STEAM,
+            'app/Facades/BaseSteam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class BaseSteam extends Facade { protected static function getFacadeAccessor(): string { return \App\Support\Steam::class; } }',
+            'app/Facades/Steam.php' => 'namespace App\Facades; class Steam extends BaseSteam {}',
+            'tests/Fixtures/Steam.php' => 'namespace App\Facades; use Illuminate\Support\Facades\Facade; class Steam extends Facade { protected static function getFacadeAccessor(): string { return \Tests\FakeSteam::class; } }',
+            'tests/FakeSteam.php' => 'namespace Tests; class FakeSteam { public function balance(): int { return 9; } }',
+            'app/Http/Controller.php' => self::CALLER,
+        ]);
+
+        self::assertTrue($this->hasEdge($result->graph, 'App\Http\Controller::show', 'App\Support\Steam::balance', Relation::Calls, Confidence::Inferred), 'the accessor inherited from BaseSteam');
+        self::assertFalse($this->hasEdge($result->graph, 'App\Http\Controller::show', 'Tests\FakeSteam::balance', Relation::Calls), 'the fixture is not the declaration the graph keeps');
+    }
 }

@@ -24,13 +24,12 @@ final class LaravelFacades
     /** @var array<string, array<string, list<?string>>> service => key => the classes bound to it, null when not read */
     private array $bindings = [];
 
+    /**
+     * @param ?string $key null when the accessor is not read: the facade says nothing, and does not take its parent's
+     */
     public function addAccessor(string $facade, string $service, ?string $key): void
     {
-        // The first declaration, as the graph keeps it, even unread: a test fixture declaring the facade again does not
-        // replace it.
-        if (!\array_key_exists($facade, $this->accessors)) {
-            $this->accessors[$facade] = [$service, $key];
-        }
+        $this->accessors[$facade] = [$service, $key];
     }
 
     public function addBinding(string $service, string $key, ?string $class): void

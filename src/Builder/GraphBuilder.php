@@ -327,7 +327,10 @@ final class GraphBuilder
                 }
             }
             foreach ($extraction->facadeAccessors as $facade => $key) {
-                $facades->addAccessor($id($facade), $service, $key !== null && str_contains($key, '\\') ? $id($key) : $key);
+                // Only the declaration the graph keeps: another one (a test fixture) does not lend it its accessor.
+                if ($graph->node($id($facade))?->file === (string) $path) {
+                    $facades->addAccessor($id($facade), $service, $key !== null && str_contains($key, '\\') ? $id($key) : $key);
+                }
             }
             // A test binds its fakes: the application's facades go to what the providers bind.
             foreach ($isTest ? [] : $extraction->containerBindings as [$key, $class]) {
