@@ -3,7 +3,7 @@
 phpgraph follows [semantic versioning](https://semver.org) from 1.0.0; what stays stable is listed in
 [docs/STABILITY.md](docs/STABILITY.md), and changes only in a major version (2.0.0), announced here.
 
-## Unreleased
+## 2.4.0 (2026-11-20)
 
 ### Added
 - Laravel facades without `@mixin` or `@method` are followed through `getFacadeAccessor()`: the `X::class` it
