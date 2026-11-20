@@ -53,4 +53,11 @@ enum Relation: string
      * matched by them), or the method of a class implementing the service generated from a protobuf file.
      */
     case ImplementedBy = 'implemented_by';
+
+    /**
+     * An Eloquent relation: a method of a model declaring it (`Book::pages`, `return $this->hasMany(Page::class)`) and
+     * the related model, the relation method in `via` (`hasMany`, `belongsTo`…). EXTRACTED, written only when the
+     * class declaring the method is a model.
+     */
+    case RelatesTo = 'relates_to';
 }

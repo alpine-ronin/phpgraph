@@ -14,22 +14,24 @@ final readonly class Reason
      *                         class it uses or is used by, the method calling it, the route named after the question
      * @param ?int    $count   for a family, its members using the core
      * @param bool    $reduced a class used by many: shown with the methods the core calls only
+     * @param ?string $relation for a related model, the Eloquent relation method (`hasMany`)
      */
     public function __construct(
         public ReasonKind $kind,
         public ?string $via = null,
         public ?int $count = null,
         public bool $reduced = false,
+        public ?string $relation = null,
     ) {
     }
 
     public function reduced(): self
     {
-        return new self($this->kind, $this->via, $this->count, true);
+        return new self($this->kind, $this->via, $this->count, true, $this->relation);
     }
 
     /**
-     * @return array{kind: string, via?: string, count?: int, reduced?: true}
+     * @return array{kind: string, via?: string, count?: int, reduced?: true, relation?: string}
      */
     public function toArray(): array
     {
@@ -42,6 +44,9 @@ final readonly class Reason
         }
         if ($this->reduced) {
             $data['reduced'] = true;
+        }
+        if ($this->relation !== null) {
+            $data['relation'] = $this->relation;
         }
 
         return $data;

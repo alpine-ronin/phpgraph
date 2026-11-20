@@ -3,6 +3,17 @@
 phpgraph follows [semantic versioning](https://semver.org) from 1.0.0; what stays stable is listed in
 [docs/STABILITY.md](docs/STABILITY.md), and changes only in a major version (2.0.0), announced here.
 
+## Unreleased
+
+### Added
+- `graph.json`: relation `relates_to`, from a method of an Eloquent model to the model of the relation it declares
+  (`return $this->hasMany(Page::class)`), the relation method in `via`. `outline` of a model names the models it
+  relates to, by its methods or its parent classes', even when they are members of a family (BookStack `Book`: Page,
+  Chapter, Bookshelf, before counted in `Entity: 5`), tagged `[hasMany by Book::pages]`, reason `related` in JSON.
+  Not a polymorphic relation (`morphOne`, `morphMany`, `morphToMany`: the comments of every model), nor, out of the
+  model's module, a model used by many (the User owning every record); nothing joins the outline through a related
+  model out of the module.
+
 ## 2.3.0 (2026-11-15)
 
 ### Added

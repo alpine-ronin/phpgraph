@@ -617,10 +617,10 @@
         "classLike": 698,
         "methods": 4076,
         "external": 324,
-        "edges": 22837,
+        "edges": 22906,
         "vendorFilesRead": 395,
         "edgesByConfidence": {
-            "EXTRACTED": 13923,
+            "EXTRACTED": 13992,
             "INFERRED": 8717,
             "AMBIGUOUS": 197
         },
@@ -933,10 +933,10 @@
         "classLike": 140,
         "methods": 148,
         "external": 99,
-        "edges": 1693,
+        "edges": 1695,
         "vendorFilesRead": 122,
         "edgesByConfidence": {
-            "EXTRACTED": 1672,
+            "EXTRACTED": 1674,
             "INFERRED": 16,
             "AMBIGUOUS": 5
         },
@@ -1132,10 +1132,10 @@
         "classLike": 112,
         "methods": 323,
         "external": 49,
-        "edges": 2035,
+        "edges": 2037,
         "vendorFilesRead": 156,
         "edgesByConfidence": {
-            "EXTRACTED": 1745,
+            "EXTRACTED": 1747,
             "INFERRED": 290,
             "AMBIGUOUS": 0
         },
@@ -1233,10 +1233,10 @@
         "classLike": 1274,
         "methods": 5934,
         "external": 270,
-        "edges": 42529,
+        "edges": 42720,
         "vendorFilesRead": 390,
         "edgesByConfidence": {
-            "EXTRACTED": 31645,
+            "EXTRACTED": 31836,
             "INFERRED": 10835,
             "AMBIGUOUS": 49
         },
