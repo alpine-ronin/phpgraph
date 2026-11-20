@@ -83,6 +83,35 @@ final class EloquentRelationsTest extends TestCase
         self::assertStringNotContainsString('belongsTo by Book::owner', (new TextPresenter(new GraphQuery($graph)))->outline('Book'), 'the User owning every record is no part of the book');
     }
 
+    public function testARelatedModelOutOfTheModuleLetsNoOtherClassIn(): void
+    {
+        $graph = $this->buildProject([
+            'app/Library/Book.php' => 'namespace App\Library; use Illuminate\Database\Eloquent\Model; class Book extends Model { public function shelf() { return $this->belongsTo(\App\Storage\Shelf::class); } public function assign(\App\Staff\Worker $worker): void { } }',
+            'app/Staff/Worker.php' => 'namespace App\Staff; class Worker { public function store(\App\Storage\Shelf $shelf): void { } }',
+            'app/Storage/Shelf.php' => 'namespace App\Storage; use Illuminate\Database\Eloquent\Model; class Shelf extends Model { }',
+        ])->graph;
+
+        $text = (new TextPresenter(new GraphQuery($graph)))->outline('Book');
+        self::assertStringContainsString('[belongsTo by Book::shelf]', $text, 'the related model is named');
+        self::assertDoesNotMatchRegularExpression('/^    Worker \\(class\\)/m', $text, 'used by the book and using the shelf only: the shelf is no way in');
+    }
+
+    public function testAMethodOverriddenByTheModelHidesTheRelationOfItsParent(): void
+    {
+        $graph = $this->buildProject([
+            'app/Models/Record.php' => 'namespace App\Models; use Illuminate\Database\Eloquent\Model; abstract class Record extends Model { public function owner() { return $this->belongsTo(\App\People\Author::class); } public function reviewer() { return $this->belongsTo(\App\People\Reviewer::class); } }',
+            'app/Models/Article.php' => 'namespace App\Models; class Article extends Record { public function owner() { return $this->belongsTo(\App\People\Editor::class); } }',
+            'app/People/Author.php' => 'namespace App\People; use Illuminate\Database\Eloquent\Model; class Author extends Model { }',
+            'app/People/Editor.php' => 'namespace App\People; use Illuminate\Database\Eloquent\Model; class Editor extends Model { }',
+            'app/People/Reviewer.php' => 'namespace App\People; use Illuminate\Database\Eloquent\Model; class Reviewer extends Model { }',
+        ])->graph;
+
+        $text = (new TextPresenter(new GraphQuery($graph)))->outline('Article');
+        self::assertStringContainsString('[belongsTo by Article::owner]', $text, 'the method of the model');
+        self::assertStringContainsString('[belongsTo by Record::reviewer]', $text, 'a parent method the model does not override');
+        self::assertStringNotContainsString('by Record::owner', $text, 'the parent method the model overrides is never called on it');
+    }
+
     private function library(): BuildResult
     {
         return $this->buildProject($this->libraryFiles());

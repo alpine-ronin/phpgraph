@@ -95,10 +95,14 @@ final class FeatureCluster
         // The models a seed relates to are named, but out of its module they are no way in, and one used by many is
         // not named: the User owning every record is no part of a page revision.
         $related = [];
+        $closed = [];
         foreach ($seeds as $seed) {
             foreach ($this->relatedModels($seed) as $model => $reason) {
-                if (!isset($core[$model]) && $this->isHub($model)) {
-                    continue;
+                if (!isset($core[$model])) {
+                    if ($this->isHub($model)) {
+                        continue;
+                    }
+                    $closed[$model] = true;
                 }
                 $core[$model] = true;
                 $reasons[$model] = $reason;
@@ -115,7 +119,7 @@ final class FeatureCluster
             // The first class of the core each candidate is linked to, and whether the candidate uses it.
             $via = [];
             foreach (array_keys($core) as $class) {
-                if (!$this->followed($followed, (string) $class, $stems)) {
+                if (isset($closed[$class]) || !$this->followed($followed, (string) $class, $stems)) {
                     continue;
                 }
                 $anchor = isset($anchors[$class]);
@@ -234,9 +238,12 @@ final class FeatureCluster
     {
         $related = [];
         $lineage = [];
+        // A method the class overrides is never called on it: its relation is not the class's.
+        $declared = [];
         for ($current = $class; $current !== null && !isset($lineage[$current]);) {
             $lineage[$current] = true;
             $parent = null;
+            $methods = [];
             foreach ($this->graph->incident($current) as $item) {
                 if (!$item['forward']) {
                     continue;
@@ -248,6 +255,11 @@ final class FeatureCluster
                 if ($item['edge']->relation !== Relation::HasMethod) {
                     continue;
                 }
+                $name = strtolower(substr($item['other'], (int) strrpos($item['other'], '::') + 2));
+                if (isset($declared[$name])) {
+                    continue;
+                }
+                $methods[$name] = true;
                 foreach ($this->graph->incident($item['other']) as $relation) {
                     $model = $relation['other'];
                     $node = $this->graph->node($model);
@@ -258,6 +270,7 @@ final class FeatureCluster
                     }
                 }
             }
+            $declared += $methods;
             $current = $parent;
         }
 
