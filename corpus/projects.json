@@ -136,5 +136,16 @@
         "composer": [
             "services/*"
         ]
+    },
+    {
+        "name": "firefly-iii",
+        "repository": "https://github.com/firefly-iii/firefly-iii",
+        "commit": "ba26768619842a4926655f315716f1b7788933d7",
+        "stack": [
+            "laravel",
+            "facades",
+            "eloquent"
+        ],
+        "why": "Large Laravel application (v6.7.9) with its own facades, container bindings and Eloquent relations: measures Laravel support. AGPL-3.0: fetched to measure, never copied"
     }
 ]

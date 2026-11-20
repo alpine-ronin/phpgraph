@@ -9,6 +9,7 @@ use PhpGraph\Builder\ApiSchemaStats;
 use PhpGraph\Builder\BuildResult;
 use PhpGraph\Builder\BusStats;
 use PhpGraph\Builder\CallStats;
+use PhpGraph\Builder\FacadeStats;
 use PhpGraph\Builder\HttpStats;
 use PhpGraph\Builder\InjectionStats;
 
@@ -50,6 +51,7 @@ final readonly class ProjectSummary
         public ApiSchemaStats $apiSchemas = new ApiSchemaStats(),
         public ActionStats $actions = new ActionStats(),
         public ?array $unresolvedCalls = null,
+        public FacadeStats $facades = new FacadeStats(),
     ) {
     }
 
@@ -81,6 +83,7 @@ final readonly class ProjectSummary
             $result->apiSchemas,
             $result->actions,
             $result->unresolvedCalls,
+            $result->facades,
         );
     }
 
@@ -136,6 +139,7 @@ final readonly class ProjectSummary
             ApiSchemaStats::fromArray($list('apiSchemas')),
             ActionStats::fromArray($list('actions')),
             $unresolvedCalls,
+            FacadeStats::fromArray($list('facades')),
         );
     }
 
@@ -173,6 +177,7 @@ final readonly class ProjectSummary
      *         citations: int, citingFiles: int, unreadable: list<string>,
      *     },
      *     unresolvedCalls?: array<string, array<string, string>>,
+     *     facades?: array{facades: int, followed: int, unresolvedCount: int, unresolved: list<string>},
      * }
      */
     public function toArray(): array
@@ -199,6 +204,10 @@ final readonly class ProjectSummary
             'apiSchemas' => $this->apiSchemas->toArray(),
             'actions' => $this->actions->toArray(),
         ];
+        // Written only for a Laravel project: graph.json of the others stays the same.
+        if (!$this->facades->isEmpty()) {
+            $data['facades'] = $this->facades->toArray();
+        }
         if ($this->unresolvedCalls !== null) {
             $data['unresolvedCalls'] = $this->unresolvedCalls;
         }

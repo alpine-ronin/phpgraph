@@ -68,6 +68,8 @@ final class BuildState
         // What a script returns types the scripts requiring it.
         hash_update($hash, 'f' . $extraction->returned?->key() . "\n");
         hash_update($hash, 'g' . json_encode([$extraction->templates, $extraction->parentArguments, $extraction->genericReturns, $extraction->genericProperties, $extraction->documentedMethods, $extraction->mixins, $extraction->conditionalReturns, $extraction->callableParameters, $extraction->templateBinders, $extraction->casts, $extraction->assertions]) . "\n");
+        // A facade calls the class its key is bound to, in another file.
+        hash_update($hash, 'k' . json_encode([$extraction->facadeAccessors, $extraction->containerBindings]) . "\n");
 
         return hash_final($hash);
     }
