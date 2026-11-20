@@ -1222,5 +1222,123 @@
         },
         "seconds": 2.11,
         "peakMemoryMb": 54
+    },
+    {
+        "name": "firefly-iii",
+        "commit": "ba26768619842a4926655f315716f1b7788933d7",
+        "filesParsed": 1382,
+        "filesFailed": 0,
+        "duplicates": 1,
+        "nodes": 9532,
+        "classLike": 1274,
+        "methods": 5934,
+        "external": 270,
+        "edges": 42310,
+        "vendorFilesRead": 390,
+        "edgesByConfidence": {
+            "EXTRACTED": 32402,
+            "INFERRED": 9859,
+            "AMBIGUOUS": 49
+        },
+        "calls": {
+            "total": 30731,
+            "inferred": 9002,
+            "ambiguous": 25,
+            "outsideProject": 19767,
+            "unknownReceiver": 1937,
+            "chainOutsideProject": 1064
+        },
+        "applicationCalls": {
+            "total": 29234,
+            "inferred": 8818,
+            "ambiguous": 19,
+            "outsideProject": 18478,
+            "unknownReceiver": 1919,
+            "chainOutsideProject": 1048
+        },
+        "testCalls": {
+            "total": 1497,
+            "inferred": 184,
+            "ambiguous": 6,
+            "outsideProject": 1289,
+            "unknownReceiver": 18,
+            "chainOutsideProject": 16
+        },
+        "bus": {
+            "handlers": {
+                "INFERRED": 41
+            },
+            "sends": {
+                "INFERRED": 207
+            },
+            "untypedSends": 0,
+            "messagesWithoutHandlerCount": 5,
+            "messagesWithoutHandler": [
+                "FireflyIII\\Events\\Model\\Budget\\DestroyedBudget",
+                "FireflyIII\\Events\\Test\\OwnerTestsNotificationChannel",
+                "FireflyIII\\Events\\Test\\UserTestsNotificationChannel",
+                "FireflyIII\\Notifications\\Notifiables\\OwnerNotifiable",
+                "FireflyIII\\User"
+            ],
+            "messagesNeverSentCount": 36,
+            "messagesNeverSent": [
+                "FireflyIII\\Jobs\\CreateAutoBudgetLimits",
+                "FireflyIII\\Jobs\\CreateRecurringTransactions",
+                "FireflyIII\\Jobs\\DownloadExchangeRates",
+                "FireflyIII\\Jobs\\WarnAboutBills",
+                "FireflyIII\\Listeners\\Model\\Account\\UpdatesAccountInformation",
+                "FireflyIII\\Listeners\\Model\\Bill\\UpdatesRulesForChangedBill",
+                "FireflyIII\\Listeners\\Model\\BudgetLimit\\ProcessesBudgetLimits",
+                "FireflyIII\\Listeners\\Model\\Budget\\ProcessesBudgets",
+                "FireflyIII\\Listeners\\Model\\PiggyBank\\CreatesPiggyBankEventForChangedAmount",
+                "FireflyIII\\Listeners\\Model\\PiggyBank\\UpdatesRulesForChangedPiggyBankName"
+            ],
+            "contracts": 0
+        },
+        "http": {
+            "routes": 639,
+            "routesWithHandler": 2,
+            "requests": 1,
+            "requestsToProject": 0,
+            "requestsToServices": 0,
+            "routesToDependencies": 0,
+            "methodMismatchCount": 0,
+            "methodMismatches": [],
+            "routesToMissingControllers": 3,
+            "missingControllers": [
+                "POST /register -> Auth\\RegisterController (routes/web.php:127)",
+                "GET /debug -> DebugController (routes/web.php:169)",
+                "GET /debug/api-test -> DebugController (routes/web.php:170)"
+            ]
+        },
+        "injections": {
+            "injections": 0,
+            "linked": 0,
+            "edges": 0,
+            "unlinkedCount": 0,
+            "unlinked": []
+        },
+        "apiSchemas": {
+            "documents": 0,
+            "operations": 0,
+            "implemented": 0,
+            "notImplemented": [],
+            "routesCovered": 0,
+            "undocumentedCount": 0,
+            "undocumented": [],
+            "rpcs": 0,
+            "rpcsImplemented": 0,
+            "rpcsNotImplemented": [],
+            "otherApis": 0,
+            "requests": 0
+        },
+        "services": 0,
+        "architecture": {
+            "layerViolations": 0,
+            "contextPairs": 0,
+            "layerFirst": false
+        },
+        "seconds": 8.46,
+        "peakMemoryMb": 221
     }
 ]
