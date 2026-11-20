@@ -20,6 +20,15 @@
 | **WordPress** | `add_action()`, `add_filter()` | `do_action()`, `apply_filters()` | |
 | **Your own code** | handler attributes and tags recognised by name, `__invoke`/`handle(Message $m)`, `*Handler` classes | `*Bus`, `*Dispatcher`, `*Publisher` types, aggregates' `recordThat()`, your bus wrappers | Guzzle, Symfony HttpClient, PSR-18 |
 
+## Laravel
+
+Measured on Firefly III (1,382 files) and BookStack, both in the corpus:
+
+- **Facades**: a static call on a facade goes to the class behind it. Its `@mixin` and `@method` tags are read first. Without them, `getFacadeAccessor()` is read: a `X::class` it returns, or a key the service providers bind (`$this->app->bind('steam', static fn (): Steam => new Steam())`, `singleton()`, `scoped()`, `instance()`, their `*If` forms, the `$bindings` and `$singletons` arrays) to `X::class`, `new X` or a closure that returns one. On Firefly III this adds 1,289 INFERRED calls (`Steam::`, `Preferences::`, `Amount::`…). `impact` of `Steam::bcround()` went from 0 to 91 classes. `overview` counts the facades and names those it could not follow, with the reason: a key bound nowhere, bound to two classes, or bound by code it does not read.
+- **Eloquent models**: casts (`'paid_at' => 'datetime'` is a Carbon), timestamps and relations read as properties (`$page->book`) type the chains on them. A relation method (`return $this->hasMany(Page::class)`) is a `relates_to` edge to the related model, and `outline` of a model names the models it relates to (`[hasMany by Book::pages]`), even when they are members of a family.
+- **Container**: `app(X::class)`, and `app()->make(X::class)` give an `X`. A call through an interface reaches its implementations: on Firefly III, 46 of the 47 interfaces the providers bind have a single implementation, so this is already the class the binding gives.
+- **Events, jobs, routes, HTTP client**: see the matrix above.
+
 ## Microservices
 
 A repository holding two or more independent Composer applications is split into services. Packages of a monorepo stay in their project: a package the root autoloads, declares as a path repository or `replace`s is a part, not a service; a library the services require (a path repository, or its package name) is their common code. Ids then carry their service, `billing@App\Domain\Order`, and a name never resolves into another service: services meet through contracts.
